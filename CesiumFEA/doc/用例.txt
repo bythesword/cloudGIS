@@ -1,0 +1,10 @@
+//base 1
+main.play(0.5)
+main.play(0.5)
+
+//base 2
+main.updateCM(0,0)//zbed
+main.updateCM(0,1)//U
+main.updateCM(0,2)//V
+
+

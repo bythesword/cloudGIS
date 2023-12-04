@@ -1,0 +1,77 @@
+{
+    "dem": {
+        "cellsize": "cellsize",
+        "coordinate_x": "xllcorner",
+        "coordinate_y": "yllcorner",
+        "start_col": 298,
+        "start_row": 55,
+        "cols": 15,
+        "rows": 15
+    },
+    "dataContent": {
+        "dem": "",
+        "zbed": {
+            "globalMM": true,
+            "max": 11.11111,
+            "min": 0.0,
+            "filter": false,
+            "filterKind": 1,
+            "filterValue": [0.0,0.1]
+        },
+        "U": {
+            "globalMM": true,
+            "max": 11.11111,
+            "min": 0.0,
+            "filter": false,
+            "filterKind": 1,
+            "filterValue": [0.0,0.1]
+        },
+        "V": {
+            "globalMM": true,
+            "max": 11.11111,
+            "min": 0.0,
+            "filter": false,
+            "filterKind": 1,
+            "filterValue": [0.0,0.1]
+        }
+    },
+    "dataMM": {
+        "zbed":[
+            [0,10],[0,20]
+        ],
+        "U": [
+            [-5,5],[0,10]
+        ],
+        "V": [
+            [-5,5],[0,10]
+        ]
+    },
+    "data": [
+        [
+            "第1个时间帧",
+            "1维度数组",
+            "顺序如下",
+            "dem",
+            "zbed",
+            "u",
+            "v",
+            "dem",
+            "zbed",
+            "u",
+            "v"
+        ],
+        [
+            "第2个时间帧",
+            "1维度数组",
+            "顺序如下",
+            "dem",
+            "zbed",
+            "u",
+            "v",
+            "dem",
+            "zbed",
+            "u",
+            "v"
+        ]
+    ]
+}

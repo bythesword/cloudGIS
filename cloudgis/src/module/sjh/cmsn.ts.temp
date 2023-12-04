@@ -1,0 +1,23 @@
+import { BaseObject } from "../common/baseobject";
+
+import { CCMSNW ,CCMBase} from "cesiumfea"
+/**
+ *  二维有序网格
+ *  */
+class CMSN extends BaseObject {
+    init(): void {
+        throw new Error("Method not implemented.");
+    }
+    load(pjid: string) {
+        throw new Error("Method not implemented.");
+    }
+    loadFromJSON(oneJSON: {}) {
+        throw new Error("Method not implemented.");
+    }
+    save(pjid: string, attribueJsong: {}) {
+        throw new Error("Method not implemented.");
+    }
+
+}
+
+export { CMSN }  

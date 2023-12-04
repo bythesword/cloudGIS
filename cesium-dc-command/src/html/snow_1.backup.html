@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Use correct character set. -->
+    <meta charset="utf-8" />
+    <!-- Tell IE to use the latest, best version. -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+    <title>Cesium model adjust</title>
+    <script src="./Cesium.js"></script>
+    <script src="./cesium_init.js"></script>
+    <script src="http://www.openlayers.vip/examples/resources/jquery-3.5.1.min.js"></script>
+    <style>
+        @import url(./Widgets/widgets.css);
+
+        html,
+        body,
+        #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?f80a36f14f8a73bb0f82e0fdbcee3058";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?f80a36f14f8a73bb0f82e0fdbcee3058";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+</head>
+
+<body>
+    <button id="reloadFunc" onClick="reloadFunc()">加载错误代码</button>
+    <div id="cesiumContainer"></div>
+    <script>
+
+        // 创建三维球
+        const viewer = init();
+
+        viewer.scene.debugShowFramesPerSecond = true;
+
+
+        function destroy() {
+            viewer.scene.postProcessStages.remove(snowStage);
+        }
+
+        function show(visible) {
+            snowStage.enabled = visible;
+        }
+
+        function snow() {
+            return "uniform sampler2D colorTexture;\n\
+            in vec2 v_textureCoordinates;\n\
+            uniform float snowSpeed;\n\
+                    uniform float snowSize;\n\
+            float snow(vec2 uv,float scale)\n\
+            {\n\
+                float time=czm_frameNumber/snowSpeed;\n\
+                float w=smoothstep(1.,0.,-uv.y*(scale/10.));if(w<.1)return 0.;\n\
+                uv+=time/scale;uv.y+=time*2./scale;uv.x+=sin(uv.y+time*.5)/scale;\n\
+                uv*=scale;vec2 s=floor(uv),f=fract(uv),p;float k=3.,d;\n\
+                p=.5+.35*sin(11.*fract(sin((s+p+scale)*mat2(7,3,6,5))*5.))-f;d=length(p);k=min(d,k);\n\
+                k=smoothstep(0.,k,sin(f.x+f.y)*snowSize);\n\
+                return k*w;\n\
+            }\n\
+            out vec4 vFragColor;\n\
+            void main(void){\n\
+                vec2 resolution=czm_viewport.zw;\n\
+                vec2 uv=(gl_FragCoord.xy*2.-resolution.xy)/min(resolution.x,resolution.y);\n\
+                vec3 finalColor=vec3(0);\n\
+                //float c=smoothstep(1.,0.3,clamp(uv.y*.3+.8,0.,.75));\n\
+                float c=0.;\n\
+                c+=snow(uv,30.)*.0;\n\
+                c+=snow(uv,20.)*.0;\n\
+                c+=snow(uv,15.)*.0;\n\
+                c+=snow(uv,10.);\n\
+                c+=snow(uv,8.);\n\
+                c+=snow(uv,6.);\n\
+                c+=snow(uv,5.);\n\
+                finalColor=(vec3(c));\n\
+                vFragColor=mix(texture(colorTexture,v_textureCoordinates),vec4(finalColor,1),.5);\n\
+                }\n\
+                ";
+        }
+
+        function snowError() {
+            return "uniform sampler2D colorTexture;\n\
+          varying vec2 v_textureCoordinates;\n\
+          uniform float snowSpeed;\n\
+                  uniform float snowSize;\n\
+          float snow(vec2 uv,float scale)\n\
+          {\n\
+              float time=czm_frameNumber/snowSpeed;\n\
+              float w=smoothstep(1.,0.,-uv.y*(scale/10.));if(w<.1)return 0.;\n\
+              uv+=time/scale;uv.y+=time*2./scale;uv.x+=sin(uv.y+time*.5)/scale;\n\
+              uv*=scale;vec2 s=floor(uv),f=fract(uv),p;float k=3.,d;\n\
+              p=.5+.35*sin(11.*fract(sin((s+p+scale)*mat2(7,3,6,5))*5.))-f;d=length(p);k=min(d,k);\n\
+              k=smoothstep(0.,k,sin(f.x+f.y)*snowSize);\n\
+              return k*w;\n\
+          }\n\
+          void main(void){\n\
+              vec2 resolution=czm_viewport.zw;\n\
+              vec2 uv=(gl_FragCoord.xy*2.-resolution.xy)/min(resolution.x,resolution.y);\n\
+              vec3 finalColor=vec3(0);\n\
+              //float c=smoothstep(1.,0.3,clamp(uv.y*.3+.8,0.,.75));\n\
+              float c=0.;\n\
+              c+=snow(uv,30.)*.0;\n\
+              c+=snow(uv,20.)*.0;\n\
+              c+=snow(uv,15.)*.0;\n\
+              c+=snow(uv,10.);\n\
+              c+=snow(uv,8.);\n\
+              c+=snow(uv,6.);\n\
+              c+=snow(uv,5.);\n\
+              finalColor=(vec3(c));\n\
+              gl_FragColor=mix(texture2D(colorTexture,v_textureCoordinates),vec4(finalColor,1),.5);\n\
+              }\n\
+              ";
+        }
+
+
+        // 设置相机位置
+        viewer.camera.flyTo({
+            //飞行时间
+            duration: 3,
+            // 设置相机位置
+            destination: {
+                x: -2197288.7477713143,
+                y: 5183756.135738204,
+                z: 2988031.3792818813
+            },
+            orientation: {
+                // 初始视角
+                heading: 3.186236775911694,
+                pitch: -1.5634562274406978,
+                roll: 0
+            }
+        });
+
+
+        let snowSize = 0.02;
+        let snowSpeed = 60.0;
+        let snowStage = null;
+
+        function initSnow(errorFlag) {
+        snowStage = new Cesium.PostProcessStage({
+                name: 'czm_snow',
+                fragmentShader: errorFlag ? snowError() : snow(),
+                uniforms: {
+                    snowSize: () => {
+                        return snowSize;
+                    },
+                    snowSpeed: () => {
+                        return snowSpeed;
+                    }
+                }
+            });
+            viewer.scene.postProcessStages.add(snowStage);
+        }
+
+        initSnow();
+
+
+
+        function reloadFunc() {
+            alert('两秒后重新加载错误代码！');
+            setTimeout(function () {
+                initSnow(true);
+            }, 2000);
+            destroy();
+        };
+
+        viewer.zoomTo(viewer.entities);
+
+    </script>
+</body>
+
+</html>

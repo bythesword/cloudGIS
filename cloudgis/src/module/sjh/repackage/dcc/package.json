@@ -1,0 +1,25 @@
+{
+  "name": "cesium-dc-command",
+  "version": "1.0.0",
+  "description": "cesium 的 command 二次封装",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "buildMin": " rollup -c rollup.config.min.js",
+    "buildAll": "rollup -c rollup.config.js && rollup -c rollup.config.min.js",
+    "build": "rollup -c rollup.config.js ",
+    "buildWorker": "rollup -c rollup.config.worker.js "
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cesium": "1.101.0"
+  },
+  "devDependencies": {
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-uglify": "6.0.4"
+  }
+}

@@ -1,0 +1,1451 @@
+import * as Cesium from "cesium";
+import { CCMBase } from "./CCMBase";
+
+import { drawVert, drawFrag, quadVert, opFrag, NupdateFrag, cpFS, cpTextureFS, uvsVS, uvsFS, cmFS, cmVS, cmAFS, cmAVS, cmW1, cmW2, cmW3, cmWS1, cmWS2, cmBlue6, cmBlue } from "./shaders/ccmIMG/material";
+// import drawVert from './shaders/ccmIMG/draw.vert.glsl?raw';
+// import drawFrag from './shaders/ccmIMG/draw.frag.glsl?raw';
+// import quadVert from './shaders/ccmIMG/quad.vert.glsl?raw';
+// import opFrag from './shaders/ccmIMG/op.frag.glsl?raw';
+// import NupdateFrag from './shaders/ccmIMG/Nupdate.frag.glsl?raw';
+// import cpFS from './shaders/ccmIMG/cp.fs.glsl?raw';
+// import cpTextureFS from './shaders/ccmIMG/cpTexture.fs.glsl?raw';//修改显示u_wind
+// import uvsVS from './shaders/ccmIMG/uvs.vs.glsl?raw';
+// import uvsFS from './shaders/ccmIMG/uvs.fs.glsl?raw';
+// import cmFS from './shaders/ccmIMG/cm.fs.glsl?raw';
+// import cmBlue6 from './shaders/ccmIMG/cmBlue6.fs.glsl?raw';
+// import cmBlue from './shaders/ccmIMG/cmBlue.fs.glsl?raw';
+// import cmVS from './shaders/ccmIMG/cm.vs.glsl?raw';
+// import cmAFS from './shaders/ccmIMG/cmArrow.fs.glsl?raw';
+// import cmAVS from './shaders/ccmIMG/cmArrow.vs.glsl?raw';
+// import cmW1 from './shaders/ccmIMG/cmW1.fs.glsl?raw';
+// import cmW2 from './shaders/ccmIMG/cmW2.fs.glsl?raw';
+// import cmW3 from './shaders/ccmIMG/cmW3.fs.glsl?raw';
+// import cmWS1 from './shaders/ccmIMG/wave2DDir.fs.glsl?raw';
+// import cmWS2 from './shaders/ccmIMG/wave2DDirGabor.fs.glsl?raw';
+
+
+import { cmWaterC12FS, cmWaterBlue6ColorFS, cmWaterBlue12ColorFS, cmWaterBlue6ABS1FS } from "./shaders/cmwater/cmWater"
+// import cmWaterC12FS from "./shaders/cmwater/cmWaterC12.fs.glsl?raw"
+// import cmWaterBlue12ColorFS from "./shaders/cmwater/cmWaterBlue6.fs.glsl?raw"
+// import cmWaterBlue6ColorFS from "./shaders/cmwater/cmWaterBlue6.fs.glsl?raw"
+// import cmWaterBlue6ABS1FS from "./shaders/cmwater/cmWaterBlue6ABS1.fs.glsl?raw"
+
+
+class CCMSNW extends CCMBase {
+
+    init() {
+        // this.material = new Material();
+        /**global texture source */
+        this.GTS = {
+        };
+        if (typeof window.GTS != "undefined") {
+            this.GTS = window.GTS;
+        }
+        else
+            window.GTS = this.GTS;
+        this.CMs = [
+            {
+                index: [],
+                tp: [],
+                uv: [],
+            }
+        ];
+        let cols = this.oneJSON.dem.cols;
+        let rows = this.oneJSON.dem.rows;
+        this.imageW = cols;
+        this.imageH = rows;
+        let tIndex = 0;
+        this.textures = {};
+
+
+        //12
+        //34
+        for (let ri = 0; ri < rows - 1; ri++) {
+            for (let ci = 0; ci < cols - 1; ci++) {
+                if (tIndex == 6) tIndex = 0;
+                //124
+                this.CMs[0].index.push((ci + 0) + (ri + 0) * cols);
+                this.CMs[0].index.push((ci + 1) + (ri + 0) * cols);
+                this.CMs[0].index.push((ci + 1) + (ri + 1) * cols);
+
+                // this.CMs[0].tp.push(tIndex++, tIndex++, tIndex++);
+                this.CMs[0].tp.push(0, 1, 2);
+
+                //旧版云图与贴图不能统一UV
+                //143
+                // this.CMs[0].index.push((ci + 0) + (ri + 0) * cols);
+                // this.CMs[0].index.push((ci + 1) + (ri + 1) * cols);
+                // this.CMs[0].index.push((ci + 0) + (ri + 1) * cols);
+
+
+                //134
+                this.CMs[0].index.push((ci + 0) + (ri + 0) * cols);
+                this.CMs[0].index.push((ci + 0) + (ri + 1) * cols);
+                this.CMs[0].index.push((ci + 1) + (ri + 1) * cols);
+
+                // this.CMs[0].tp.push(tIndex++, tIndex++, tIndex++);
+                this.CMs[0].tp.push(3, 4, 5);
+            }
+        }
+        /** data source ,已有的数据源，GL的texture */
+        this.DS = [];
+        // this.setting.currentLevel = 0;
+        this.loadDS = false
+        this.loadDSing = false;
+        this.visible = true;
+
+        return true;
+    }
+    /**
+* 是否进行绑定resize 。
+* 非FBO，设置空函数即可
+* 如果存在FBO，在需要定义，例子如下：
+*    window.addEventListener("resize", function (event) {
+*       that.resize(event, that);
+*       });
+*/
+    onReSzie() {
+        let scope = this;
+        window.addEventListener("resize", function (event) {
+            scope.resize(event, scope);
+        });
+    }
+
+
+
+
+    getTFL(frameState, peroneJSON, modelMatrix) {
+        let list = [];
+        let nc = [];
+        if (this.loadDS === false || this.updateOfListCommands === true) {
+            if (this.loadDSing === false)
+                this.initData(frameState.context);//替换gl 同 cesium
+            if (this.setting.cmType == "wind") {
+                if (typeof this.FBO1 == "undefined") {
+                    //init other 
+                    // this.initData(frameState.context, this.setting.currentLevel);//替换gl 同 cesium
+                    this.setColorRamp(frameState.context, this.setting.wind.defaultRampColors);
+                    this.set_numParticles(frameState.context, this.setting.wind.counts);//替换gl 同 cesium
+                    // init frame bufer
+                    this.FBO1 = this.createFramebuffer(frameState.context);
+                    this.FBO2 = this.createFramebuffer(frameState.context);
+                }
+                else {
+                    this.FBO1.destroy();
+                    this.FBO2.destroy();
+                    this.FBO1 = this.createFramebuffer(frameState.context);
+                    this.FBO2 = this.createFramebuffer(frameState.context);
+                }
+            }
+        } else if (this.setting.cmType == "wind" && (this.resizeFlag == true || this.renewFlag == true)) {
+            this.FBO1.destroy();
+            this.FBO2.destroy();
+            this.FBO1 = this.createFramebuffer(frameState.context);
+            this.FBO2 = this.createFramebuffer(frameState.context);
+        }
+
+
+        if (this.loadDS && this.setting.cmType == "wind") {
+            let attributesFC = {
+                "position": {
+                    index: 0,
+                    componentsPerAttribute: 2,
+                    vertexBuffer: [
+                        0, 0,
+                        1, 0,
+                        0, 1,
+                        0, 1,
+                        1, 0,
+                        1, 1
+                    ],//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+
+            };
+            // //Draw 
+            // // // // //draw 衰减
+            let uniformMap0 = {
+                iTime: () => {
+                    this.iTime += 0.0051;
+                    let iTime = (new Date().getTime() - this.timestamp) / 1000.0;
+                    return iTime;
+                    //return this.iTime
+                },
+                u_opacity: () => { return this.setting.wind.fadeOpacity; },
+            };
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesFC, uniformMap0, { vertexShader: quadVert, fragmentShader: opFrag }, Cesium.PrimitiveType.TRIANGLES, [this.FBO2], this.FBO1));//op
+            // nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesFC, uniformMap0, { vertexShader: this.material.quadVert, fragmentShader: this.material.opFrag }, Cesium.PrimitiveType.TRIANGLES, [this.FBO2], this.FBO1));//op
+
+            let uniformMapPoints = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_particles_res: () => { return this.particleStateResolution },
+                u_w: () => { return this.particleStateResolution },
+                u_h: () => { return this.particleStateResolution },
+
+                u_wind_Umin: () => { return this.oneJSON.dataContent.U.min },
+                u_wind_Vmin: () => { return this.oneJSON.dataContent.V.min },
+                u_wind_Umax: () => { return this.oneJSON.dataContent.U.max },
+                u_wind_Vmax: () => { return this.oneJSON.dataContent.V.max },
+                u_color_ramp: () => { return this.colorRampTexture; },
+                u_wind: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+                u_channel0: () => { return this.particleStateTexture0; },
+
+                u_pointSize: () => { return this.getWMPointSize(); },
+            };
+
+            let attributesPoints = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: this.particleIndices,
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                }
+            };
+            // // // // ////points 
+            // nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesPoints, uniformMapPoints, { vertexShader: this.material.drawVert, fragmentShader: this.material.drawFrag }, Cesium.PrimitiveType.POINTS, [], this.FBO1));
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesPoints, uniformMapPoints, { vertexShader: drawVert, fragmentShader: drawFrag }, Cesium.PrimitiveType.POINTS, [], this.FBO1));
+
+            let uniformMapPointsUP = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_speed_factor: () => { return this.setting.wind.speedFactor },
+                u_drop_rate: () => { return this.setting.wind.dropRate },
+                u_drop_rate_bump: () => { return this.setting.wind.dropRateBump },
+                u_rand_seed: () => { return Math.random(); },
+
+
+                u_particles_res: () => { return this.particleStateResolution },
+                u_w: () => { return this.particleStateResolution },
+                u_h: () => { return this.particleStateResolution },
+                u_imgW: () => { return this.imageW; },
+                u_imgH: () => { return this.imageH; },
+
+                u_wind_Umin: () => { return this.oneJSON.dataContent.U.min },
+                u_wind_Vmin: () => { return this.oneJSON.dataContent.V.min },
+                u_wind_Umax: () => { return this.oneJSON.dataContent.U.max },
+                u_wind_Vmax: () => { return this.oneJSON.dataContent.V.max },
+
+                u_color_ramp: () => { return this.colorRampTexture; },
+                u_wind: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+                u_channel0: () => { return this.particleStateTexture0; },
+
+            };
+            // // // // // // // update to  PST2
+            nc.push(this.createCommandOfCompute(uniformMapPointsUP, NupdateFrag, this.particleStateTexture1));
+            // nc.push(this.createCommandOfCompute(uniformMapPointsUP, this.material.NupdateFrag, this.particleStateTexture1));
+            let uniformMapPointsUPCP = {
+                u_channel0: () => { return this.particleStateTexture1; },
+            };
+            // // // // // // // update to  PST2
+            nc.push(this.createCommandOfCompute(uniformMapPointsUPCP, cpTextureFS, this.particleStateTexture0));
+            // nc.push(this.createCommandOfCompute(uniformMapPointsUPCP, this.material.cpTextureFS, this.particleStateTexture0));
+
+
+
+            // // // // // // //copy to  screen 
+            let attributesUVS = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.index,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+
+                "a_tp": {
+                    index: 1,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.tp,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+            };
+            let uniformMapUVS = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+                u_dem_enable: () => { return this.getEnableDEM() },
+                u_dem_base: () => { return this.getBaseZ() },
+
+                u_z_enable_dem_rate: () => { return this.getRateDEM() },
+                u_z_baseZ: () => { return this.getBaseZ() },
+                u_z_rateZbed: () => { return this.getRateZbed() },
+
+                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+                u_filterGlobalMM: () => { return { x: this.oneJSON.dataContent.zbed.global_MM, y: this.oneJSON.dataContent.U.global_MM, z: this.oneJSON.dataContent.V.global_MM } },
+
+                u_filterKind: () => {
+                    return {
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterKind,
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterKind,
+                        z: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterKind,
+                    }
+                },
+                u_filter: () => {
+                    return {
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filter,
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filter,
+                        z: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filter,
+                    }
+                },
+                u_filterValue_zebd: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.zbed.filterValue[0],
+                        // y: this.oneJSON.dataContent.zbed.filterValue[1]
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterValue[0],
+                        y: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterValue[1],
+                    }
+                },
+                u_filterValue_U: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.U.filterValue[0],
+                        // y: this.oneJSON.dataContent.U.filterValue[1]
+                        x: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterValue[0],
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterValue[1],
+                    }
+                },
+                u_filterValue_V: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.V.filterValue[0],
+                        // y: this.oneJSON.dataContent.V.filterValue[1]
+                        x: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterValue[0],
+                        y: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterValue[1],
+                    }
+                },
+
+                u_color_ramp: () => { return this.colorRampTexture; },
+                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+                u_channel0: () => { return this.FBO1.getColorTexture(0); },
+
+                u_UVs: () => { return false; },
+                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+                u_UV_and: () => { return this.getWMUV_and_or() },
+
+            };
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMapUVS, { vertexShader: uvsVS, fragmentShader: uvsFS }, Cesium.PrimitiveType.TRIANGLES, [this.FBO1], undefined, true));//copy uvs ,需要透明，copy的时候
+            // nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, {}, { vertexShader: this.material.uvsVS, fragmentShader: this.material.uvsFS }, Cesium.PrimitiveType.TRIANGLES, [this.FBO1]));//copy uvs
+
+            // // // // // // //copy to FBO2
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesFC, {}, { vertexShader: quadVert, fragmentShader: cpFS }, Cesium.PrimitiveType.TRIANGLES, [this.FBO1], this.FBO2));//copy 
+            //  nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesFC, {}, { vertexShader: this.material.quadVert, fragmentShader: this.material.cpFS }, Cesium.PrimitiveType.TRIANGLES, [this.FBO1], this.FBO2));//copy 
+        }
+        else if (this.loadDS && (this.setting.cmType == "cm" || this.setting.cmType == "cmBlue" || this.setting.cmType == "cmBlue6")) {
+            let attributesUVS = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.index,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+                // "a_uv": {
+                //     index: 1,
+                //     componentsPerAttribute: 2,
+                //     vertexBuffer: peroneJSON.uv,//normal array
+                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+                // },
+                "a_tp": {
+                    index: 1,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.tp,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+            };
+            let uniformMap = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+                u_dem_enable: () => { return this.getEnableDEM() },
+                u_dem_base: () => { return this.getBaseZ() },
+
+                u_z_enable_dem_rate: () => { return this.getRateDEM() },
+                u_z_baseZ: () => { return this.getBaseZ() },
+                u_z_rateZbed: () => { return this.getRateZbed() },
+
+                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+                u_filterGlobalMM: () => { return { x: this.oneJSON.dataContent.zbed.global_MM, y: this.oneJSON.dataContent.U.global_MM, z: this.oneJSON.dataContent.V.global_MM } },
+
+                u_filterKind: () => {
+                    return {
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterKind,
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterKind,
+                        z: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterKind,
+                    }
+                },
+                u_filter: () => {
+                    return {
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filter,
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filter,
+                        z: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filter,
+                    }
+                },
+                u_filterValue_zebd: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.zbed.filterValue[0],
+                        // y: this.oneJSON.dataContent.zbed.filterValue[1]
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterValue[0],
+                        y: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterValue[1],
+                    }
+                },
+                u_filterValue_U: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.U.filterValue[0],
+                        // y: this.oneJSON.dataContent.U.filterValue[1]
+                        x: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterValue[0],
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterValue[1],
+                    }
+                },
+                u_filterValue_V: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.V.filterValue[0],
+                        // y: this.oneJSON.dataContent.V.filterValue[1]
+                        x: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterValue[0],
+                        y: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterValue[1],
+                    }
+                },
+
+                // u_color_ramp: () => { return this.colorRampTexture; },
+                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+                // u_channel0: () => { return this.particleStateTexture0; },
+
+                u_UVs: () => { return false; },
+                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+
+            };
+            if (this.setting.cmType == "cmBLue") {
+                nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmBlue }, Cesium.PrimitiveType.TRIANGLES));
+            }
+            else if (this.setting.cmType == "cmBLue6") {
+                nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmBlue6 }, Cesium.PrimitiveType.TRIANGLES));
+            }
+            else {
+                nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmFS }, Cesium.PrimitiveType.TRIANGLES));
+            }
+        }
+        else if (this.loadDS && (this.setting.cmType == "cmWater" || this.setting.cmType == "cmWaterBlue12" || this.setting.cmType == "cmWaterBlue6" || this.setting.cmType == "cmWaterBlue6ABS1")) {
+            let attributesUVS = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.index,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+                // "a_uv": {
+                //     index: 1,
+                //     componentsPerAttribute: 2,
+                //     vertexBuffer: peroneJSON.uv,//normal array
+                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+                // },
+                "a_tp": {
+                    index: 1,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.tp,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+            };
+            let uniformMap = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+                u_dem_enable: () => { return this.getEnableDEM() },
+                u_dem_base: () => { return this.getBaseZ() },
+
+                u_z_enable_dem_rate: () => { return this.getRateDEM() },
+                u_z_baseZ: () => { return this.getBaseZ() },
+                u_z_rateZbed: () => { return this.getRateZbed() },
+
+                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+                u_filterGlobalMM: () => { return { x: this.oneJSON.dataContent.zbed.global_MM, y: this.oneJSON.dataContent.U.global_MM, z: this.oneJSON.dataContent.V.global_MM } },
+
+                u_filterKind: () => {
+                    return {
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterKind,
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterKind,
+                        z: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterKind,
+                    }
+                },
+                u_filter: () => {
+                    return {
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filter,
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filter,
+                        z: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filter,
+                    }
+                },
+                u_filterValue_zebd: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.zbed.filterValue[0],
+                        // y: this.oneJSON.dataContent.zbed.filterValue[1]
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterValue[0],
+                        y: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterValue[1],
+                    }
+                },
+                u_filterValue_U: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.U.filterValue[0],
+                        // y: this.oneJSON.dataContent.U.filterValue[1]
+                        x: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterValue[0],
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterValue[1],
+                    }
+                },
+                u_filterValue_V: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.V.filterValue[0],
+                        // y: this.oneJSON.dataContent.V.filterValue[1]
+                        x: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterValue[0],
+                        y: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterValue[1],
+                    }
+                },
+
+                // u_color_ramp: () => { return this.colorRampTexture; },
+                u_DS: () => {
+                    // console.log(this.DS[this.getCurrentLevelByIndex()])
+                    return this.DS[this.getCurrentLevelByIndex()];
+                },
+                // u_channel0: () => { return this.particleStateTexture0; },
+
+                u_UVs: () => { return false; },
+                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+                iChannel0: () => {
+                    if (typeof this.textures["grayNoise64x64"] != "undefined") return this.textures["grayNoise64x64"]
+                },
+                iChannel1: () => {
+                    if (typeof this.textures["pebbles"] != "undefined") return this.textures["pebbles"]
+                },
+                u_water_wave_speed: () => {
+                    return this.getCMWaterWaveSpeed();
+                },
+                u_water_wave_scale: () => {
+                    return this.getCMWaterWaveScale();
+                },
+                u_water_wave_opacity: () => {
+                    return this.getCMWaterWaveOpacity();
+                },
+
+
+
+            };
+            if (this.setting.cmType == "cmWaterBlue6ABS1") {
+                nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmWaterBlue6ABS1FS }, Cesium.PrimitiveType.TRIANGLES));
+            }
+            else if (this.setting.cmType == "cmWaterBlue6") {
+                nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmWaterBlue6ColorFS }, Cesium.PrimitiveType.TRIANGLES));
+            }
+            else if (this.setting.cmType == "cmWaterBlue12") {
+                nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmWaterBlue12ColorFS }, Cesium.PrimitiveType.TRIANGLES));
+            }
+            else {
+                nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmWaterC12FS }, Cesium.PrimitiveType.TRIANGLES));
+            }
+        }
+        else if (this.loadDS && (this.setting.cmType == "arrow")) {
+            let attributesUVS = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.index,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+                // "a_uv": {
+                //     index: 1,
+                //     componentsPerAttribute: 2,
+                //     vertexBuffer: peroneJSON.uv,//normal array
+                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+                // },
+                "a_tp": {
+                    index: 1,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.tp,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+            };
+            let uniformMap = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+                u_dem_enable: () => { return this.getEnableDEM() },
+                u_dem_base: () => { return this.getBaseZ() },
+
+                u_z_enable_dem_rate: () => { return this.getRateDEM() },
+                u_z_baseZ: () => { return this.getBaseZ() },
+                u_z_rateZbed: () => { return this.getRateZbed() },
+
+                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+                u_filterGlobalMM: () => { return { x: this.oneJSON.dataContent.zbed.global_MM, y: this.oneJSON.dataContent.U.global_MM, z: this.oneJSON.dataContent.V.global_MM } },
+
+                u_filterKind: () => {
+                    return {
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterKind,
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterKind,
+                        z: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterKind : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterKind,
+                    }
+                },
+                u_filter: () => {
+                    return {
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filter,
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filter,
+                        z: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filter : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filter,
+                    }
+                },
+                u_filterValue_zebd: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.zbed.filterValue[0],
+                        // y: this.oneJSON.dataContent.zbed.filterValue[1]
+                        x: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterValue[0],
+                        y: this.oneJSON.dataContent.zbed.global_MM ? this.oneJSON.dataContent.zbed.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].zbed.filterValue[1],
+                    }
+                },
+                u_filterValue_U: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.U.filterValue[0],
+                        // y: this.oneJSON.dataContent.U.filterValue[1]
+                        x: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterValue[0],
+                        y: this.oneJSON.dataContent.U.global_MM ? this.oneJSON.dataContent.U.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].U.filterValue[1],
+                    }
+                },
+                u_filterValue_V: () => {
+                    return {
+                        // x: this.oneJSON.dataContent.V.filterValue[0],
+                        // y: this.oneJSON.dataContent.V.filterValue[1]
+                        x: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterValue[0] : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterValue[0],
+                        y: this.oneJSON.dataContent.V.global_MM ? this.oneJSON.dataContent.V.filterValue[1] : this.oneJSON.data[this.getCurrentLevelByIndex()].V.filterValue[1],
+                    }
+                },
+
+                // u_color_ramp: () => { return this.colorRampTexture; },
+                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+                // u_channel0: () => { return this.particleStateTexture0; },
+
+                u_UVs: () => { return false; },
+                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+
+            };
+
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmAVS, fragmentShader: cmAFS }, Cesium.PrimitiveType.TRIANGLES));
+
+        }
+
+        else if (this.loadDS && (this.setting.cmType == "w1")) {
+            let attributesUVS = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.index,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+                // "a_uv": {
+                //     index: 1,
+                //     componentsPerAttribute: 2,
+                //     vertexBuffer: peroneJSON.uv,//normal array
+                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+                // },
+                "a_tp": {
+                    index: 1,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.tp,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+            };
+            let uniformMap = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+                u_dem_enable: () => { return this.getEnableDEM() },
+                u_dem_base: () => { return this.getBaseZ() },
+
+                u_z_enable_dem_rate: () => { return this.getRateDEM() },
+                u_z_baseZ: () => { return this.getBaseZ() },
+                u_z_rateZbed: () => { return this.getRateZbed() },
+
+                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+
+
+                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+
+
+                u_UVs: () => { return false; },
+                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+
+            };
+
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: uvsVS, fragmentShader: cmW1 }, Cesium.PrimitiveType.TRIANGLES));
+
+        }
+        else if (this.loadDS && (this.setting.cmType == "w2")) {
+            let attributesUVS = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.index,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+                // "a_uv": {
+                //     index: 1,
+                //     componentsPerAttribute: 2,
+                //     vertexBuffer: peroneJSON.uv,//normal array
+                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+                // },
+                "a_tp": {
+                    index: 1,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.tp,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+            };
+            let uniformMap = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+                u_dem_enable: () => { return this.getEnableDEM() },
+                u_dem_base: () => { return this.getBaseZ() },
+
+                u_z_enable_dem_rate: () => { return this.getRateDEM() },
+                u_z_baseZ: () => { return this.getBaseZ() },
+                u_z_rateZbed: () => { return this.getRateZbed() },
+
+                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+
+
+                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+
+
+                u_UVs: () => { return false; },
+                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+
+            };
+
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: uvsVS, fragmentShader: cmW2 }, Cesium.PrimitiveType.TRIANGLES));
+
+        }
+        else if (this.loadDS && (this.setting.cmType == "w3")) {
+            let attributesUVS = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.index,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+                // "a_uv": {
+                //     index: 1,
+                //     componentsPerAttribute: 2,
+                //     vertexBuffer: peroneJSON.uv,//normal array
+                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+                // },
+                "a_tp": {
+                    index: 1,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.tp,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+            };
+            let uniformMap = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+                u_dem_enable: () => { return this.getEnableDEM() },
+                u_dem_base: () => { return this.getBaseZ() },
+
+                u_z_enable_dem_rate: () => { return this.getRateDEM() },
+                u_z_baseZ: () => { return this.getBaseZ() },
+                u_z_rateZbed: () => { return this.getRateZbed() },
+
+                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+
+
+                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+
+
+                u_UVs: () => { return false; },
+                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+
+            };
+
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: uvsVS, fragmentShader: cmW3 }, Cesium.PrimitiveType.TRIANGLES));
+
+        }
+        else if (this.loadDS && (this.setting.cmType == "ws1")) {
+            let attributesUVS = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.index,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+                // "a_uv": {
+                //     index: 1,
+                //     componentsPerAttribute: 2,
+                //     vertexBuffer: peroneJSON.uv,//normal array
+                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+                // },
+                "a_tp": {
+                    index: 1,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.tp,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+            };
+            let uniformMap = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+                u_dem_enable: () => { return this.getEnableDEM() },
+                u_dem_base: () => { return this.getBaseZ() },
+
+                u_z_enable_dem_rate: () => { return this.getRateDEM() },
+                u_z_baseZ: () => { return this.getBaseZ() },
+                u_z_rateZbed: () => { return this.getRateZbed() },
+
+                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+
+
+                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+
+
+                u_UVs: () => { return false; },
+                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+
+            };
+
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmAVS, fragmentShader: cmWS1 }, Cesium.PrimitiveType.TRIANGLES));
+
+        }
+        else if (this.loadDS && (this.setting.cmType == "ws2")) {
+            let attributesUVS = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.index,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+                // "a_uv": {
+                //     index: 1,
+                //     componentsPerAttribute: 2,
+                //     vertexBuffer: peroneJSON.uv,//normal array
+                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+                // },
+                "a_tp": {
+                    index: 1,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: peroneJSON.tp,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+            };
+            let uniformMap = {
+                iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+                u_dem_enable: () => { return this.getEnableDEM() },
+                u_dem_base: () => { return this.getBaseZ() },
+
+                u_z_enable_dem_rate: () => { return this.getRateDEM() },
+                u_z_baseZ: () => { return this.getBaseZ() },
+                u_z_rateZbed: () => { return this.getRateZbed() },
+
+                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+
+
+                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+
+
+                u_UVs: () => { return false; },
+                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+
+            };
+
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmAVS, fragmentShader: cmWS2 }, Cesium.PrimitiveType.TRIANGLES));
+
+        }
+        else {
+            this.updateOfListCommands = true;
+        }
+
+        return nc;
+
+    }
+    /**
+     * 设置更新command，数据变更
+     * @param {*} flag :boolean ,default=true
+     */
+    setUpdateOfListCommands(flag = true) {
+        this.updateOfListCommands = flag;
+    }
+    /**
+     * 加载数据源
+     * @param {*} context :any,cesium 上下文
+     * @param {*} url   ：image
+     * @param {*} index     ：number ,第几帧数据
+     * @param {*} first ：是否为第一次加载，默认：false（不是）
+     */
+    loadDataSource(context, url, index, first = false) {
+        let scope = this;
+        let windImage = new Image();
+
+        windImage.src = url;
+        let n = parseInt(index);
+
+        windImage.onload = function () {
+            // scope.windData = windData;
+            scope.DS[n] = new Cesium.Texture({
+                context: context,
+                width: scope.getCols(),
+                height: scope.getRows(),
+                pixelFormat: Cesium.PixelFormat.RGBA,
+                pixelDatatype: Cesium.PixelDatatype.UNSIGNED_BYTE,
+                source: windImage,
+                sampler: new Cesium.Sampler({
+                    minificationFilter: Cesium.TextureMinificationFilter.NEAREST,
+                    magnificationFilter: Cesium.TextureMagnificationFilter.NEAREST
+                })
+            });
+            if (first === true)
+                scope.loadDS = true;
+        };
+    }
+    async createTextureFromUrl(context, url, samplerFlag = false, repeat = true) {
+
+        let img = new Image();
+        img.src = url;
+        const wrap = repeat ? Cesium.TextureWrap.REPEAT : Cesium.TextureWrap.CLAMP_TO_EDGE;
+        let texture = await new Promise(resolve => {
+            img.onload = function () {
+                resolve(new Cesium.Texture({
+                    context: context,
+                    width: img.width,
+                    height: img.height,
+                    pixelFormat: Cesium.PixelFormat.RGBA,
+                    pixelDatatype: Cesium.PixelDatatype.UNSIGNED_BYTE,
+                    source: img,
+                    sampler: new Cesium.Sampler({
+                        // 	minificationFilter: Cesium.TextureMinificationFilter.NEAREST,
+                        // 	magnificationFilter: Cesium.TextureMagnificationFilter.NEAREST
+                        wrapS: wrap,
+                        wrapT: wrap,
+                    })
+                })
+                )
+            }
+        })
+        // console.log("createTextureFromUrl")
+        return texture;
+    }
+    async createTextureNearestFromUrl(context, url) {
+
+        let img = new Image();
+        img.src = url;
+
+        let texture = await new Promise(resolve => {
+            img.onload = function () {
+                resolve(new Cesium.Texture({
+                    context: context,
+                    width: img.width,
+                    height: img.height,
+                    pixelFormat: Cesium.PixelFormat.RGBA,
+                    pixelDatatype: Cesium.PixelDatatype.UNSIGNED_BYTE,
+                    source: img,
+                    sampler: new Cesium.Sampler({
+                        minificationFilter: Cesium.TextureMinificationFilter.NEAREST,
+                        magnificationFilter: Cesium.TextureMagnificationFilter.NEAREST
+                    })
+                })
+                )
+            }
+        })
+        // console.log("createTextureFromUrl")
+        return texture;
+    }
+    /**
+     * 初始化数据源
+     * @param {*} context cesium 上下文
+     */
+    async initData(context) {
+        this.loadDSing = true;
+        let data = this.oneJSON.data;
+        //已有global texture source
+
+        this.textures["grayNoise64x64"] = await this.createTextureFromUrl(context, "/noise/grayNoise64x64.png");
+        this.textures["pebbles"] = await this.createTextureFromUrl(context, "/noise/pebbles.png");
+
+        if (Object.keys(this.GTS).length == 2) {
+            this.DS = this.GTS.textureArray;
+        }
+        else {
+            for (let i in data) {
+                this.DS[parseInt(i)] = await this.createTextureNearestFromUrl(context, data[i].png);
+                // if (i == 0) {
+                //     this.loadDataSource(context, data[i].png, i, true);
+                // }
+                // else {
+                //     this.loadDataSource(context, data[i].png, i, false);
+                // }
+            }
+            this.loadDS = true;
+            this.GTS.textureArray = this.DS;
+            this.GTS.dataArray = data;
+        }
+    }
+    /**
+     * 二维网格的cols
+     * @returns :number
+     */
+    getCols() {
+        return this.oneJSON.dem.cols;
+    }
+    /**
+     * 二维网格的rows
+     * @returns :number
+     */
+    getRows() {
+        return this.oneJSON.dem.rows;
+    }
+
+    //////////////////////////////////////////////
+    // wind map
+
+    set_numParticles(context, numParticles) {
+        if (this.particleStateTexture0) return;
+        // let width = context.drawingBufferWidth;
+        // let height = context.drawingBufferHeight;
+        // this.w = width;
+        // this.h = height;
+        // console.log(this.w, this.h)
+        const particleRes = this.particleStateResolution = Math.ceil(Math.sqrt(numParticles));
+        this._numParticles = particleRes * particleRes;
+        const particleState = new Uint8Array(particleRes * particleRes * 4);//1024*4,RGBA
+
+        for (let i = 0; i < particleRes * particleRes * 4; i++)
+            particleState[i] = Math.floor(Math.random() * 256);
+
+        const colorTextureOptions = {
+            context: context,
+            width: particleRes,
+            height: particleRes,
+            pixelFormat: Cesium.PixelFormat.RGBA,
+            pixelDatatype: Cesium.PixelDatatype.UNSIGNED_BYTE
+            ,
+            sampler: new Cesium.Sampler({
+                // the values of texture will not be interpolated
+                minificationFilter: Cesium.TextureMinificationFilter.NEAREST,
+                magnificationFilter: Cesium.TextureMagnificationFilter.NEAREST
+            })
+        };
+
+        this.particleStateTexture0 = this.createTexture(colorTextureOptions, particleState);
+        this.particleStateTexture1 = this.createTexture(colorTextureOptions, particleState);
+
+        const particleIndices = new Float32Array(this._numParticles);
+        for (let i = 0; i < this._numParticles; i++) particleIndices[i] = i;
+        this.particleIndices = particleIndices;
+        this.particleIndexBuffer = this.createVAO(context, particleIndices);// = util.createBuffer(gl, particleIndices);
+    }
+    get_numParticles() {
+        return this._numParticles;
+    }
+    setColorRamp(context, colors) {
+        if (this.colorRampTexture) return;
+        // lookup texture for colorizing the particles according to their speed
+        const colorTextureOptions = {
+            context: context,
+            width: 16,
+            height: 16,
+            pixelFormat: Cesium.PixelFormat.RGBA,
+            pixelDatatype: Cesium.PixelDatatype.UNSIGNED_BYTE
+        };
+        // this.colorRampTexture = UtilFBO.createTexture(colorTextureOptions, this.getColorRamp(colors));
+        let data = this.getColorRamp(colors)
+        this.colorRampTexture = new Cesium.Texture({
+            context: context,
+            width: 16,
+            height: 16,
+            pixelFormat: Cesium.PixelFormat.RGBA,
+            pixelDatatype: Cesium.PixelDatatype.UNSIGNED_BYTE,
+            source: { arrayBufferView: data }
+        });
+    }
+    getColorRamp(colors) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = 256;
+        canvas.height = 1;
+
+        const gradient = ctx.createLinearGradient(0, 0, 256, 0);
+        for (const stop in colors) {
+            gradient.addColorStop(+stop, colors[stop]);
+        }
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 256, 1);
+        // canvas.style = "   position: absolute; z-index: 1;"
+        // document.body.appendChild(canvas);
+        return new Uint8Array(ctx.getImageData(0, 0, 256, 1).data);
+    }
+
+    ///////////////////////////////////////////////////
+    // cesium ext.
+
+
+    ///////////////////////////////////////////////////////////////
+    // base function
+    /**
+     * 返回帧数及当前帧的index
+     * @returns [index,total]
+     */
+    getIndexListOfCM() {
+        return [this.getCurrentLevelByIndex(), this.oneJSON.data.length];
+    }
+    // getCMNameList(){
+    //     return 
+    // }
+    updateSource(oneJSON) {
+        this.visible = false;
+        for (let i of this.DS) {
+            i.destroy();
+        }
+        this.init(oneJSON);
+        this.setUpdateOfListCommands(true);
+
+        // this.updateCM(level, name)
+    }
+
+
+    /**
+     * 设置是否使用DEM
+     * @param {*} enable :boolen ,default=true
+     */
+    setEnableDEM(enable = true) {
+        this.setting.z.dem = enable;
+    }
+    /**
+     * 设置是否使用zbed
+     * @param {*} enable :boolen ,default=true
+     */
+    setEnableZbed(enable = true) {
+        this.setting.z.zbed_up = enable;
+    }
+    /**
+     * 设置是否使用基础高度
+     * @param {*} enable :boolen ,default=true
+     */
+    setEnableBaseZ(enable = true) {
+        this.setting.z.base_z_enable = enable;
+    }
+
+
+    /**
+     * 设置是基础高度
+     * @param {*} enable :number ,default=0
+     */
+    setBaseZ(z = 0) {
+        this.setting.z.base_z = z;
+    }
+    /**
+ * 设置是zbed的倍率，
+ * @param {*} enable :number ,default=1
+ */
+    setRateZbed(rate = 1) {
+        this.setting.z.RateZbed = rate;
+    }
+    /**
+ * 设置是dem的倍率
+ * @param {*} enable :number ,default=1
+ */
+    setRateDEM(rate = 1) {
+        this.setting.z.RateDEM = rate;
+    }
+    /**
+     * 获取当前设置的基础高度
+     * @returns 基础高度，默认为0
+     */
+    getBaseZ() {
+        if (this.setting.z.base_z_enable === true)
+            return this.setting.z.base_z;
+        else
+            return 0;
+    }
+    /**
+ * 获取当前设置的zbed的倍率
+ * @returns 基础高度，默认为1
+ */
+    getRateZbed() {
+        if (this.setting.z.zbed_up === true)
+            return this.setting.z.RateZbed;
+        else
+            return 1;
+    }
+    /**
+* 获取当前设置的dem的倍率
+* @returns 基础高度，默认为1
+*/
+
+    getEnableDEM() {
+        if (this.setting.z.dem === true) {
+            return true;
+        }
+        else
+            return false;
+    }
+
+
+    getRateDEM() {
+        if (this.getEnableDEM() === true) {
+            return this.setting.z.RateDEM;
+        }
+        else
+            return 1;
+    }
+
+    /**
+     * 风场粒子数量
+     * @param {*} value :number ,默认：4096 
+     */
+    setWMCounts(value = 4096) {
+        this.setting.wind.counts = value;
+    }
+    /**
+     * 设置粒子衰减率
+     * @param {*} value :number ,default 0.996
+     */
+    setWMFadeOpacity(value = 0.996) {
+        this.setting.wind.fadeOpacity = value;
+    }
+    /**
+     * 设置速度因子
+     * @param {*} value :number ,default 0.25
+     */
+    setWMSpeedFactor(value = 0.25) {
+        this.setting.wind.fadeOpacity = value;
+    }
+
+    /**
+     * 设置掉落倍率
+     * @param {*} value :number ,default 0.003
+     */
+    setWMDropRate(value = 0.003) {
+        this.setting.wind.dropRate = value;
+    }
+    /**
+     * 掉落随机率
+     * @param {*} value :number ,default 0.01
+     */
+    setWMDropRateBump(value = 0.01) {
+        this.setting.wind.dropRateBump = value;
+    }
+
+    /**
+     * 设置速度色表
+     * @param {*} value :{}
+     */
+    setWMDefaultRampColors(value) {
+        this.setting.wind.defaultRampColors = value;
+    }
+    /**
+     * 设置zbed是否使用全局过滤
+     * @param {*} g :boolean,default true
+     */
+    setFilterZbedGlobal(g = true) {
+        this.oneJSON.dataContent.zbed.global_MM = g;
+    }
+    /**
+     * 设置VU是否使用全局过滤
+     * @param {*} g :boolean,default true
+     */
+    setFilterUVGlobal(g = true) {
+        this.oneJSON.dataContent.U.global_MM = g;
+        this.oneJSON.dataContent.V.global_MM = g;
+    }
+    ////////////////////////////////
+
+    /**
+     * 设置zbed的过滤种类
+     * 
+     * @param {number } g,default 1，
+     * 
+     * 1= 数值
+     * 
+     * 2=百分比
+     */
+    setFilterZbedfilterKind(g = 1) {
+        this.oneJSON.dataContent.zbed.filterKind = g;
+    }
+
+    /**
+     * 设置UV的过滤种类
+     * 
+     * @param {number } g,default 1，
+     * 
+     * 1= 数值
+     * 
+     * 2=百分比
+     */
+    setFilterUVfilterKind(g = 1) {
+        this.oneJSON.dataContent.U.filterKind = g;
+        this.oneJSON.dataContent.V.filterKind = g;
+    }
+    /**
+     * 设置zbed是否应用过滤
+     * @param {*} g :boolean ,default true
+     */
+    setEnableFilterZbed(g = true) {
+        this.oneJSON.dataContent.zbed.filter = g;
+    }
+
+    /**
+     * 设置UV是否使用过滤
+     * @param boolean g ,default true
+     */
+    setEnableFilterUV(g = true) {
+        this.oneJSON.dataContent.U.filter = g;
+        this.oneJSON.dataContent.V.filter = g;
+    }
+    /**
+     * 设置zbed的过滤范围，因种类不同而不同
+     * @param number[] g 
+     */
+    setFilterZbedfilterValue(g = []) {
+        this.oneJSON.dataContent.zbed.filterValue = g;
+    }
+    /**
+     * 设置UV的过滤范围，因种类不同而不同
+     * @param number[] g 
+     */
+    setFilterUVfilterValue(g = []) {
+        this.oneJSON.dataContent.U.filterValue = g;
+        this.oneJSON.dataContent.V.filterValue = g;
+    }
+
+
+
+    resize(event, that) {
+        if (this.setting.cmType == "wind") {
+            that.updateOfListCommands = true;
+            that.resizeFlag = true;
+        }        // const gl = this.gl;
+        // const emptyPixels = new Uint8Array(gl.canvas.width * gl.canvas.height * 4);
+        // // screen textures to hold the drawn screen for the previous and the current frame
+        // this.backgroundTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, gl.canvas.width, gl.canvas.height);
+        // this.screenTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, gl.canvas.width, gl.canvas.height);
+    }
+    /**
+     * 设置风场粒子大小（像素）
+     * @param number size ,default 1
+     */
+    setWMPointSize(size = 1) {
+        size = parseInt(size);
+        this.setting.wind.pointSize = size;
+    }
+    /**
+     * 获取风场粒子大小（尺寸）
+     * @returns number,粒子尺寸
+     */
+    getWMPointSize() {
+        return this.setting.wind.pointSize;
+    }
+
+    /**
+     * 设置UV过滤的 逻辑：and /or
+     * @param boolean and 
+     * 
+     * default true (and) 
+     * 
+     * fale(or)
+     */
+    setWMUV_and_or(and = true) {
+        this.setting.wind.UV_and_or = and;
+    }
+
+    /**
+     *  设置UV过滤的 逻辑：and /or
+     *
+     * 
+     * default true (and) 
+     * 
+     * fale(or)
+     * 
+     * @returns  boolean 
+     */
+    getWMUV_and_or() {
+        return this.setting.wind.UV_and_or;
+    }
+
+
+    /**
+     * 需要覆写的，每个不同
+     * @param {*} level 
+     */
+    updateCM(level) {
+
+    }
+
+    ///////////////////////////////////////////////////
+    //CM water 
+    getCMWaterWaveSpeed() {
+        if (typeof this.setting.cmWater != undefined && typeof this.setting.cmWater.speed != "undefined") {
+            return this.setting.cmWater.speed;
+        }
+        else
+            return 1.0
+        // cmWater: {
+        //     speed: 1.,
+        //     scale: 0.5,
+        //     opacity: 0.105,
+        // },
+    }
+    getCMWaterWaveScale() {
+        if (typeof this.setting.cmWater != undefined && typeof this.setting.cmWater.scale != "undefined") {
+            return this.setting.cmWater.scale;
+        }
+        else
+            return 1.0
+    }
+    getCMWaterWaveOpacity() {
+        if (typeof this.setting.cmWater != undefined && typeof this.setting.cmWater.opacity != "undefined") {
+            return this.setting.cmWater.opacity;
+        }
+        else
+            return 0.105;
+    }
+}
+
+export { CCMSNW };

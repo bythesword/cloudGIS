@@ -1,0 +1,7 @@
+1、必须有的目录
+    A、noise
+    B、Cesium
+
+2、目录说明
+    A、RGBA，cesiumFEA的数据源，可以用url代替，测试必须有
+    B、POI，POI的测试资源

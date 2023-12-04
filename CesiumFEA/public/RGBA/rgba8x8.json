@@ -1,0 +1,95 @@
+{
+    "dem": {
+        "cellsize": 80,
+        "coordinate_x": 12418323.100646,
+        "coordinate_y": 4148832.7248636,
+        "start_col": 0,
+        "start_row": 0,
+        "cols": 8,
+        "rows": 8
+    },
+    "dataContent": {
+        "DEM": {
+            "global_MM": true,
+            "max": 1658.068,
+            "min": 257.0,
+            "filterKind": 1,
+            "filterValue": [
+                0.0,
+                0.01
+            ],
+            "filter": true
+        },
+        "zbed": {
+            "global_MM": false,
+            "max": 25.419131546127044,
+            "min": 0.0,
+            "filterKind": 1,
+            "filterValue": [
+                0.0,
+                0.1
+            ],
+            "filter": false
+        },
+        "U": {
+            "global_MM": true,
+            "max": 0.047,
+            "min": -0.16,
+            "filterKind": 1,
+            "filterValue": [
+                0.0,
+                0.1
+            ],
+            "filter": false
+        },
+        "V": {
+            "global_MM": true,
+            "max": 0.005,
+            "min": -0.23,
+            "filterKind": 1,
+            "filterValue": [
+                0.0,
+                0.1
+            ],
+            "filter": false
+        }
+    },
+    "data": [
+        {
+            "png": "/public/RGBA/rgba8x8.png",
+            "zbed": {
+                "global_MM": false,
+                "max": 25.419131546127044,
+                "min": 0.0,
+                "filterKind": 1,
+                "filterValue": [
+                    0.0,
+                    0.1
+                ],
+                "filter": false
+            },
+            "U": {
+                "global_MM": true,
+                "max": 0.047,
+                "min": -0.16,
+                "filterKind": 1,
+                "filterValue": [
+                    0.0,
+                    0.1
+                ],
+                "filter": false
+            },
+            "V": {
+                "global_MM": true,
+                "max": 0.005,
+                "min": -0.23,
+                "filterKind": 1,
+                "filterValue": [
+                    0.0,
+                    0.1
+                ],
+                "filter": false
+            }
+        }
+    ]
+}

@@ -1,0 +1,5 @@
+建立链接，省的写声明了
+
+new-item -ItemType Junction  -Path   ./dcc -Target ..\..\..\..\node_modules\cesium-dc-command
+
+new-item -ItemType Junction  -Path   ./cesiumfea -Target ..\..\..\..\node_modules\cesiumfea
