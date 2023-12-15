@@ -79,7 +79,7 @@ let setting = {
             1.0: '#d53e4f'
         },
     },
-    cmType: "cm",//cm,cmBLue,wind
+    cmType: "cmWaterBlue6ABS1",//cm,cmBLue,wind,cmWaterBlue6ABS1
     cm: "zbed",
 };
 let oneCCM = new CCMSNW(modelMatrix, rgbaJSON, setting);

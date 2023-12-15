@@ -76,7 +76,7 @@ let setting = {
     // //     },
     // // },
     // cmType:"cm",//cm,cmBLue,wind
-    cmType: "cmWater",
+    cmType: "cmBlue",
 };
 let oneCCM = new CCMSNW(modelMatrix, rgbaJSON, setting);
 

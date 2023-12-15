@@ -1,39 +1,56 @@
 import * as Cesium from "cesium";
 import { CCMBase } from "./CCMBase";
 
-import { drawVert, drawFrag, quadVert, opFrag, NupdateFrag, cpFS, cpTextureFS, uvsVS, uvsFS, cmFS, cmVS, cmAFS, cmAVS, cmW1, cmW2, cmW3, cmWS1, cmWS2, cmBlue6, cmBlue } from "./shaders/ccmIMG/material";
-// import drawVert from './shaders/ccmIMG/draw.vert.glsl?raw';
-// import drawFrag from './shaders/ccmIMG/draw.frag.glsl?raw';
-// import quadVert from './shaders/ccmIMG/quad.vert.glsl?raw';
-// import opFrag from './shaders/ccmIMG/op.frag.glsl?raw';
-// import NupdateFrag from './shaders/ccmIMG/Nupdate.frag.glsl?raw';
-// import cpFS from './shaders/ccmIMG/cp.fs.glsl?raw';
-// import cpTextureFS from './shaders/ccmIMG/cpTexture.fs.glsl?raw';//修改显示u_wind
-// import uvsVS from './shaders/ccmIMG/uvs.vs.glsl?raw';
-// import uvsFS from './shaders/ccmIMG/uvs.fs.glsl?raw';
-// import cmFS from './shaders/ccmIMG/cm.fs.glsl?raw';
-// import cmBlue6 from './shaders/ccmIMG/cmBlue6.fs.glsl?raw';
-// import cmBlue from './shaders/ccmIMG/cmBlue.fs.glsl?raw';
-// import cmVS from './shaders/ccmIMG/cm.vs.glsl?raw';
-// import cmAFS from './shaders/ccmIMG/cmArrow.fs.glsl?raw';
-// import cmAVS from './shaders/ccmIMG/cmArrow.vs.glsl?raw';
-// import cmW1 from './shaders/ccmIMG/cmW1.fs.glsl?raw';
-// import cmW2 from './shaders/ccmIMG/cmW2.fs.glsl?raw';
-// import cmW3 from './shaders/ccmIMG/cmW3.fs.glsl?raw';
-// import cmWS1 from './shaders/ccmIMG/wave2DDir.fs.glsl?raw';
-// import cmWS2 from './shaders/ccmIMG/wave2DDirGabor.fs.glsl?raw';
+// import { drawVert, drawFrag, quadVert, opFrag, NupdateFrag, cpFS, cpTextureFS, uvsVS, uvsFS, cmFS, cmVS, cmAFS, cmAVS, cmW1, cmW2, cmW3, cmWS1, cmWS2, cmBlue6, cmBlue } from "./shaders/ccmIMG/material";
+import drawVert from './shaders/ccmIMG/draw.vert.glsl?raw';
+import drawFrag from './shaders/ccmIMG/draw.frag.glsl?raw';
+import quadVert from './shaders/ccmIMG/quad.vert.glsl?raw';
+import opFrag from './shaders/ccmIMG/op.frag.glsl?raw';
+import NupdateFrag from './shaders/ccmIMG/Nupdate.frag.glsl?raw';
+import cpFS from './shaders/ccmIMG/cp.fs.glsl?raw';
+import cpTextureFS from './shaders/ccmIMG/cpTexture.fs.glsl?raw';//修改显示u_wind
+import uvsVS from './shaders/ccmIMG/uvs.vs.glsl?raw';
+import uvsFS from './shaders/ccmIMG/uvs.fs.glsl?raw';
+import cmFS from './shaders/ccmIMG/cm.fs.glsl?raw';
+import cmBlue6 from './shaders/ccmIMG/cmBlue6.fs.glsl?raw';
+import cmBlue from './shaders/ccmIMG/cmBlue.fs.glsl?raw';
+import cmVS from './shaders/ccmIMG/cm.vs.glsl?raw';
+import cmAFS from './shaders/ccmIMG/cmArrow.fs.glsl?raw';
+import cmAVS from './shaders/ccmIMG/cmArrow.vs.glsl?raw';
+import cmW1 from './shaders/ccmIMG/cmW1.fs.glsl?raw';
+import cmW2 from './shaders/ccmIMG/cmW2.fs.glsl?raw';
+import cmW3 from './shaders/ccmIMG/cmW3.fs.glsl?raw';
+import cmWS1 from './shaders/ccmIMG/wave2DDir.fs.glsl?raw';
+import cmWS2 from './shaders/ccmIMG/wave2DDirGabor.fs.glsl?raw';
 
 
-import { cmWaterC12FS, cmWaterBlue6ColorFS, cmWaterBlue12ColorFS, cmWaterBlue6ABS1FS } from "./shaders/cmwater/cmWater"
-// import cmWaterC12FS from "./shaders/cmwater/cmWaterC12.fs.glsl?raw"
-// import cmWaterBlue12ColorFS from "./shaders/cmwater/cmWaterBlue6.fs.glsl?raw"
-// import cmWaterBlue6ColorFS from "./shaders/cmwater/cmWaterBlue6.fs.glsl?raw"
-// import cmWaterBlue6ABS1FS from "./shaders/cmwater/cmWaterBlue6ABS1.fs.glsl?raw"
+// import { cmWaterC12FS, cmWaterBlue6ColorFS, cmWaterBlue12ColorFS, cmWaterBlue6ABS1FS } from "./shaders/cmwater/cmWater"
+import cmWaterC12FS from "./shaders/cmwater/cmWaterC12.fs.glsl?raw"
+import cmWaterBlue12ColorFS from "./shaders/cmwater/cmWaterBlue12.fs.glsl?raw"
+import cmWaterBlue6ColorFS from "./shaders/cmwater/cmWaterBlue6.fs.glsl?raw"
+import cmWaterBlue6ABS1FS from "./shaders/cmwater/cmWaterBlue6ABS1.fs.glsl?raw"
 
+
+import CNAACPFS from './shaders/CMAA/cp.fs.glsl?raw';
+import CMAA1 from './shaders/CMAA/cmaa1.fs.glsl?raw';
+import CMAA2 from './shaders/CMAA/cmaa2.fs.glsl?raw';
+import CMAA3 from './shaders/CMAA/cmaa3.fs.glsl?raw';
 
 class CCMSNW extends CCMBase {
 
     init() {
+        if (typeof this.setting.CMAA != "undefined" && this.setting.CMAA === false) {
+            this.setting.CMAA = false;
+        }
+        else {
+            this.setting.CMAA = true;
+        }
+        this.CMAA = false;
+        this.CMAA1 = false;
+        this.CMAA2 = false;
+        this.CMAA3 = false;
+        this.CMAA_compute_flag = false;
+        this.CMAA_compute_flag_first = true;
         // this.material = new Material();
         /**global texture source */
         this.GTS = {
@@ -144,6 +161,139 @@ class CCMSNW extends CCMBase {
             this.FBO2 = this.createFramebuffer(frameState.context);
         }
 
+
+        if (this.setting.CMAA === true && this.loadDS !== false && this.CMAA_compute_flag === true) {
+            // let uniformMapCMAA1 = {
+            //     u_channel0: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+
+            //     u_Umin: () => { return this.oneJSON.dataContent.U.min },
+            //     u_Vmin: () => { return this.oneJSON.dataContent.V.min },
+            //     u_Umax: () => { return this.oneJSON.dataContent.U.max },
+            //     u_Vmax: () => { return this.oneJSON.dataContent.V.max },
+
+            //     u_w: () => { return this.CMAA_w; },
+            //     u_h: () => { return this.CMAA_h; },
+
+            //     u_rate3: () => { return 1. },
+            //     u_rate2: () => { return 0.98 },
+            //     u_rate1: () => { return 0.96 },
+
+            //     u_limit: () => { return 0.0 },
+            //     u_alpha: () => { return 1.0 },
+
+            // };
+            // nc.push(this.createCommandOfCompute(uniformMapCMAA1, CMMAA1, this.CMAA1));
+            // let uniformMapCMAA2 = {
+            //     u_channel0: () => { return this.CMAA1; },
+            //     u_rate3: () => { return 1. },
+            //     u_rate2: () => { return 0.9 },
+            //     u_rate1: () => { return 0.8 },
+            //     u_limit: () => { return 0.0 },
+            //     u_alpha: () => { return 0.950 },
+            //     u_w: () => { return this.CMAA_w; },
+            //     u_h: () => { return this.CMAA_h; },
+            //     u_Umin: () => { return this.oneJSON.dataContent.U.min },
+            //     u_Vmin: () => { return this.oneJSON.dataContent.V.min },
+            //     u_Umax: () => { return this.oneJSON.dataContent.U.max },
+            //     u_Vmax: () => { return this.oneJSON.dataContent.V.max },
+            // };
+            // nc.push(this.createCommandOfCompute(uniformMapCMAA2, CMMAA1, this.CMAA2));
+            // let uniformMapCMAA3 = {
+            //     u_channel0: () => { return this.CMAA2; },
+            //     u_rate3: () => { return 1. },
+            //     u_rate2: () => { return 0.9 },
+            //     u_rate1: () => { return 0.8 },
+            //     u_limit: () => { return 0.0 },
+            //     u_alpha: () => { return 0.930 },
+            //     u_w: () => { return this.CMAA_w; },
+            //     u_h: () => { return this.CMAA_h; },
+            //     u_Umin: () => { return this.oneJSON.dataContent.U.min },
+            //     u_Vmin: () => { return this.oneJSON.dataContent.V.min },
+            //     u_Umax: () => { return this.oneJSON.dataContent.U.max },
+            //     u_Vmax: () => { return this.oneJSON.dataContent.V.max },
+            // };
+            // nc.push(this.createCommandOfCompute(uniformMapCMAA3, CMMAA1, this.CMAA3));
+            // // this.CMAA = this.CMAA3;
+            // let uniformMapCMAA4 = {
+            //     u_channel0: () => { return this.CMAA3; },
+            //     u_rate3: () => { return 1. },
+            //     u_rate2: () => { return 0.8 },
+            //     u_rate1: () => { return 0.6 },
+            //     u_limit: () => { return -0.30 },
+            //     u_alpha: () => { return 0.30 },
+            //     u_w: () => { return this.CMAA_w; },
+            //     u_h: () => { return this.CMAA_h; },
+            //     u_Umin: () => { return this.oneJSON.dataContent.U.min },
+            //     u_Vmin: () => { return this.oneJSON.dataContent.V.min },
+            //     u_Umax: () => { return this.oneJSON.dataContent.U.max },
+            //     u_Vmax: () => { return this.oneJSON.dataContent.V.max },
+            // };
+            // nc.push(this.createCommandOfCompute(uniformMapCMAA4, CMMAA1, this.CMAA2));
+            // let uniformMapCMAA5 = {
+            //     u_channel0: () => { return this.CMAA2; },
+            //     u_rate3: () => { return 1. },
+            //     u_rate2: () => { return 0.8 },
+            //     u_rate1: () => { return 0.6 },
+            //     u_limit: () => { return -0.30 },
+            //     u_alpha: () => { return 0.30 },
+            //     u_w: () => { return this.CMAA_w; },
+            //     u_h: () => { return this.CMAA_h; },
+            //     u_Umin: () => { return this.oneJSON.dataContent.U.min },
+            //     u_Vmin: () => { return this.oneJSON.dataContent.V.min },
+            //     u_Umax: () => { return this.oneJSON.dataContent.U.max },
+            //     u_Vmax: () => { return this.oneJSON.dataContent.V.max },
+            // };
+            // nc.push(this.createCommandOfCompute(uniformMapCMAA5, CMMAA1, this.CMAA1));
+            // this.CMAA = this.CMAA1;
+
+
+
+            let uniformMapCMAA1 = {
+                u_channel0: () => {
+                    if (this.updateOfListCommands === true || this.CMAA_compute_flag_first === true) {
+                        this.CMAA_compute_flag_first = false;
+                        return this.DS[this.getCurrentLevelByIndex()];
+                    }
+                    else {
+                        return this.CMAA1;
+                    }
+                },
+                u_origin: () => {
+                    if (this.updateOfListCommands === true || this.CMAA_compute_flag_first === true) {
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                },
+                u_Umin: () => { return this.oneJSON.dataContent.U.min },
+                u_Vmin: () => { return this.oneJSON.dataContent.V.min },
+                u_Umax: () => { return this.oneJSON.dataContent.U.max },
+                u_Vmax: () => { return this.oneJSON.dataContent.V.max },
+
+                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+                u_w: () => { return this.CMAA_w; },
+                u_h: () => { return this.CMAA_h; },
+
+                u_round: () => { return 10.0 },
+                u_limit: () => { return -1.0 },
+
+
+            };
+            nc.push(this.createCommandOfCompute(uniformMapCMAA1, CMAA2, this.CMAA2));
+
+            let uniformMapCMAA_CP = {
+                u_channel0: () => {
+                    // return this.DS[this.getCurrentLevelByIndex()]
+                    return this.CMAA2;
+                },
+            };
+            nc.push(this.createCommandOfCompute(uniformMapCMAA_CP, CNAACPFS, this.CMAA));
+            nc.push(this.createCommandOfCompute(uniformMapCMAA_CP, CNAACPFS, this.CMAA1));
+
+        }
 
         if (this.loadDS && this.setting.cmType == "wind") {
             let attributesFC = {
@@ -418,6 +568,8 @@ class CCMSNW extends CCMBase {
 
                 u_UVs: () => { return false; },
                 u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+                u_DS_new: () => { return this.CMAA; },//20231213
+                u_enable_CMAA: () => { return this.setting.CMAA; },//20231213
 
             };
             if (this.setting.cmType == "cmBLue") {
@@ -430,7 +582,7 @@ class CCMSNW extends CCMBase {
                 nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmFS }, Cesium.PrimitiveType.TRIANGLES));
             }
         }
-        else if (this.loadDS && (this.setting.cmType == "cmWater" || this.setting.cmType == "cmWaterBlue12" || this.setting.cmType == "cmWaterBlue6" || this.setting.cmType == "cmWaterBlue6ABS1")) {
+        else if (this.loadDS && (this.setting.cmType == "cmWater" || this.setting.cmType == "cmWaterBlue12" || this.setting.cmType == "cmWaterBlue6" || this.setting.cmType == "cmWaterBlue6ABS1") || this.setting.cmType == "cmWaterC12") {
             let attributesUVS = {
                 "a_index": {
                     index: 0,
@@ -509,12 +661,8 @@ class CCMSNW extends CCMBase {
                     }
                 },
 
-                // u_color_ramp: () => { return this.colorRampTexture; },
-                u_DS: () => {
-                    // console.log(this.DS[this.getCurrentLevelByIndex()])
-                    return this.DS[this.getCurrentLevelByIndex()];
-                },
-                // u_channel0: () => { return this.particleStateTexture0; },
+
+
 
                 u_UVs: () => { return false; },
                 u_CMType: () => { return 1; },//1=zbed,2=u,3=v
@@ -533,7 +681,22 @@ class CCMSNW extends CCMBase {
                 u_water_wave_opacity: () => {
                     return this.getCMWaterWaveOpacity();
                 },
+                u_DS: () => {
+                    // console.log(this.DS[this.getCurrentLevelByIndex()])
+                    return this.DS[this.getCurrentLevelByIndex()];
+                },
 
+
+                u_DS_new: () => { return this.CMAA; },
+
+                // u_DS_new: () => {
+                //     // console.log(this.DS[this.getCurrentLevelByIndex()])
+                //     return this.DS[this.getCurrentLevelByIndex()];
+                // },
+                // u_DS: () => {
+                //     return this.CMAA;
+                // },//20231213
+                u_enable_CMAA: () => { return this.setting.CMAA; },//20231213
 
 
             };
@@ -1000,6 +1163,7 @@ class CCMSNW extends CCMBase {
      * @param {*} context cesium 上下文
      */
     async initData(context) {
+        console.log("浮点纹理", context.floatingPointTexture);
         this.loadDSing = true;
         let data = this.oneJSON.data;
         //已有global texture source
@@ -1013,6 +1177,10 @@ class CCMSNW extends CCMBase {
         else {
             for (let i in data) {
                 this.DS[parseInt(i)] = await this.createTextureNearestFromUrl(context, data[i].png);
+                if (i === "0") {
+                    // console.log("DS texture:", this.DS[parseInt(i)]);
+                    this.set_CMAA(context, this.DS[parseInt(i)]._width, this.DS[parseInt(i)]._height);
+                }
                 // if (i == 0) {
                 //     this.loadDataSource(context, data[i].png, i, true);
                 // }
@@ -1024,6 +1192,34 @@ class CCMSNW extends CCMBase {
             this.GTS.textureArray = this.DS;
             this.GTS.dataArray = data;
         }
+    }
+
+    set_CMAA(context, w, h) {
+        const CMMAA_array = new Float32Array(w * h * 4);//1024*4,RGBA
+        // const CMMAA_array = new Uint8Array(w * h * 4);//1024*4,RGBA
+        for (let i = 0; i < w * h * 4; i++)
+            CMMAA_array[i] = 1000.0;
+
+        const colorTextureOptions = {
+            context: context,
+            width: w,
+            height: h,
+            pixelFormat: Cesium.PixelFormat.RGBA,
+            pixelDatatype: Cesium.PixelDatatype.FLOAT
+            // pixelDatatype: Cesium.PixelDatatype.UNSIGNED_BYTE
+            ,
+            sampler: new Cesium.Sampler({
+                // the values of texture will not be interpolated
+                minificationFilter: Cesium.TextureMinificationFilter.NEAREST,
+                magnificationFilter: Cesium.TextureMagnificationFilter.NEAREST
+            })
+        };
+        this.CMAA1 = this.createTexture(colorTextureOptions, CMMAA_array);
+        this.CMAA2 = this.createTexture(colorTextureOptions, CMMAA_array);
+        this.CMAA = this.createTexture(colorTextureOptions, CMMAA_array);
+        this.CMAA_compute_flag = true;
+        this.CMAA_w = w;
+        this.CMAA_h = h;
     }
     /**
      * 二维网格的cols
@@ -1449,3 +1645,4 @@ class CCMSNW extends CCMBase {
 }
 
 export { CCMSNW };
+

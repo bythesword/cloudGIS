@@ -21,7 +21,7 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
     imageryProvider: new Cesium.UrlTemplateImageryProvider({
         // url: "https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",//image map
         // url: "http://webrd02.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}",//行政普通
-        url: 'https://t0.tianditu.gov.cn/vec_w/wmts?' +            'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&' +            'TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk=' + 'b826df734706d11202d422f9166be9a5',
+        url: 'https://t0.tianditu.gov.cn/vec_w/wmts?' + 'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&' + 'TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk=' + 'b826df734706d11202d422f9166be9a5',
         tilingScheme: new Cesium.WebMercatorTilingScheme(),
     }),
     animation: false,    //左下角的动画仪表盘
@@ -34,7 +34,7 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
     fullscreenButton: false, //右下角的全屏按钮
 });
 viewer.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(116.31069, 39.9952786, 26000),
+    destination: Cesium.Cartesian3.fromDegrees(116.207069, 39.952786, 1000),
     orientation: {
         heading: Cesium.Math.toRadians(0.0),
         pitch: Cesium.Math.toRadians(-90.0),
@@ -45,27 +45,30 @@ viewer.camera.setView({
 window.Cesium = Cesium;//add by tom
 window.viewer = viewer;
 
-var origin = Cesium.Cartesian3.fromDegrees(116.207069, 39.952786, 0)
-// var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin)
+var origin = Cesium.Cartesian3.fromDegrees(116.207069, 39.952786, 5)
+var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin)
+
+// var origin = Cesium.Cartesian3.fromDegrees(116.207069, 39.952786, 0)
+//  var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin)
 
 
 
 
-console.log("origin",origin)
+// console.log("origin",origin)
 
-// Rotate a point 45 degrees counterclockwise around the x-axis.
-// const p = new Cesium.Cartesian3(5, 6, 7);
-const m = Cesium.Matrix3.fromRotationX(Cesium.Math.toRadians(0.30));
-console.log("m",m);
-
-
-const rotated = Cesium.Matrix3.multiplyByVector(m, origin, new Cesium.Cartesian3());
-console.log("rotated",rotated);
+// // Rotate a point 45 degrees counterclockwise around the x-axis.
+// // const p = new Cesium.Cartesian3(5, 6, 7);
+// const m = Cesium.Matrix3.fromRotationX(Cesium.Math.toRadians(0.30));
+// console.log("m",m);
 
 
-var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(rotated)
+// const rotated = Cesium.Matrix3.multiplyByVector(m, origin, new Cesium.Cartesian3());
+// console.log("rotated",rotated);
 
-// Cesium.Matrix4.multiplyByMatrix3(modelMatrix, rotation, modelMatrix);
+
+// var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(rotated)
+
+// // Cesium.Matrix4.multiplyByMatrix3(modelMatrix, rotation, modelMatrix);
 
 
 
@@ -107,8 +110,10 @@ let setting = {
             1.0: '#d53e4f'
         },
     },
-    cmType: "cm",//cm,cmBLue,wind
+    //cmWaterC12,有未知原因的错误，未定位，使用cmWater代替
+    cmType: "cmWater",//cmWater,cmWaterBlue12,cmWaterBlue6ABS1,cmWaterC12,cm,cmBlue,cmBlue6
     cm: "zbed",
+    CMAA: true,
 };
 let oneCCM = new CCMSNW(modelMatrix, rgbaJSON, setting);
 

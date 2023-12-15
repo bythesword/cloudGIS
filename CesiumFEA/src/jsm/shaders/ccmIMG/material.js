@@ -1529,7 +1529,7 @@ varying float v_dem;
 uniform bool u_toscreen;
 void main() {
     if(v_dem == 0.0) {
-        // discard;
+        discard;
         gl_FragColor = vec4(0, 0, 0, 0);
         return;
     }
