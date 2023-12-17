@@ -23,6 +23,7 @@ varying vec2 v_textureCoordinates;
 float value_limit = 0.1;
 
 vec4 one_vs_three(vec4 a, vec4 b, vec4 c, vec4 d) {
+     float rate=15.0;
     float fr, fg, fb, fa;
     float alpha = b.a;
     if(alpha < c.a) {
@@ -32,9 +33,9 @@ vec4 one_vs_three(vec4 a, vec4 b, vec4 c, vec4 d) {
         alpha = d.a;
     }
 
-    fr = (b.r + c.r + d.r) / 3.0 - value_limit;//这里以zbed为基准，其他参数以zbed的值为是否进行discar的判断
-    fg = (b.g + c.g + d.g) / 3.0;
-    fb = (b.b + c.b + d.b) / 3.0;
+    fr = (b.r + c.r + d.r) / rate - value_limit;//这里以zbed为基准，其他参数以zbed的值为是否进行discar的判断
+    fg = (b.g + c.g + d.g) / rate;
+    fb = (b.b + c.b + d.b) / rate;
 
     fa = alpha + 1.0;
 
@@ -43,6 +44,7 @@ vec4 one_vs_three(vec4 a, vec4 b, vec4 c, vec4 d) {
 }
 
 vec4 two_vs_two(vec4 a, vec4 B, vec4 C, vec4 D) {
+    float rate=28.0;
     vec4 b, c, d;
     if(B.a == 0.0) {
         b = C;
@@ -63,15 +65,15 @@ vec4 two_vs_two(vec4 a, vec4 B, vec4 C, vec4 D) {
         alpha = c.a;
     }
 
-    fr = (b.r + c.r) / 3.0 - value_limit;//这里以zbed为基准，其他参数以zbed的值为是否进行discar的判断
-    fg = (b.g + c.g) / 3.0;
-    fb = (b.b + c.b) / 3.0;
+    fr = (b.r + c.r) / rate - value_limit;//这里以zbed为基准，其他参数以zbed的值为是否进行discar的判断
+    fg = (b.g + c.g) / rate;
+    fb = (b.b + c.b) / rate;
     fa = alpha + 1.0;
 
     return vec4(fr, fg, fb, fa);
 }
 vec4 one_vs_one(vec4 a, vec4 B, vec4 C, vec4 D) {
-
+    float rate=50.0;
     vec4 one;
     if(B.a != 0.0) {
         one = B;
@@ -86,9 +88,9 @@ vec4 one_vs_one(vec4 a, vec4 B, vec4 C, vec4 D) {
     float fr, fg, fb, fa;
     float alpha = one.a;
 
-    fr = (one.r) / 4.0 - value_limit;//这里以zbed为基准，其他参数以zbed的值为是否进行discar的判断
-    fg = one.g / 4.0;
-    fb = one.b / 4.0;
+    fr = (one.r) / rate- value_limit;//这里以zbed为基准，其他参数以zbed的值为是否进行discar的判断
+    fg = one.g / rate;
+    fb = one.b / rate;
     fa = alpha + 1.0;
 
     return vec4(fr, fg, fb, fa);
@@ -146,7 +148,7 @@ void main() {
         return;
     } else {
         gl_FragColor = rgba5;
-        // return;
+        //  return;
     }
     // if(rgba5.a >= 2.0) {// second ++
     //     gl_FragColor = vec4(50, 0, 0, 1);
@@ -165,8 +167,8 @@ void main() {
         gl_FragColor = vec4(50, 0, 0, 1);
         return;
     }
-    gl_FragColor = vec4(100, 0, 0, 1);
-    return;
+    // gl_FragColor = vec4(100, 0, 0, 1);
+    // return;
     if(v_textureCoordinates.x == 0.0 && v_textureCoordinates.y == 0.0) {
         rgba6 = texture2D(u_channel0, vec2((v_textureCoordinates.x * u_w + 1.0) / u_w, (v_textureCoordinates.y * u_h + 0.0) / u_h));
         rgba8 = texture2D(u_channel0, vec2((v_textureCoordinates.x * u_w + 0.0) / u_w, (v_textureCoordinates.y * u_h + 1.0) / u_h));
@@ -283,6 +285,8 @@ void main() {
     gl_FragColor = rgba5;// vec4(1);
     //1vs3
     if(t_d == 3 || t_c == 3 || t_b == 3 || t_a == 3) {
+
+        return;
         vec4 a, b, c;
         if(t_a == 3) {
             a = rgba4;
@@ -302,58 +306,63 @@ void main() {
             c = rgba6;
         }
         gl_FragColor = one_vs_three(rgba5, a, b, c);
-        gl_FragColor = vec4(100, 0, 0, 1);
-        // gl_FragColor = vec4(1);
+        // gl_FragColor = vec4(0, 100, 0, 1);
+        gl_FragColor.g = 100.0;
 
     }
-    gl_FragColor = vec4(50, 0, 0, 1);
-    return;
-    // //2vs2
-    // else if(t_d == 2 || t_c == 2 || t_b == 2 || t_a == 2) {
-    //     vec4 a, b, c;
-    //     if(t_a == 2) {
-    //         a = rgba4;
-    //         b = rgba1;
-    //         c = rgba2;
-    //     } else if(t_b == 2) {
-    //         a = rgba2;
-    //         b = rgba3;
-    //         c = rgba6;
-    //     } else if(t_c == 2) {
-    //         a = rgba4;
-    //         b = rgba7;
-    //         c = rgba8;
-    //     } else if(t_d == 2) {
-    //         a = rgba7;
-    //         b = rgba8;
-    //         c = rgba9;
-    //     }
-    //     gl_FragColor = two_vs_two(rgba5, a, b, c);
-    // } 
-    // //1v1
-    // else if(t_d == 1 || t_c == 1 || t_b == 1 || t_a == 1) {
-    //     vec4 a, b, c;
-    //     if(t_a == 1) {
-    //         a = rgba4;
-    //         b = rgba1;
-    //         c = rgba2;
-    //     } else if(t_b == 1) {
-    //         a = rgba2;
-    //         b = rgba3;
-    //         c = rgba6;
-    //     } else if(t_c == 1) {
-    //         a = rgba4;
-    //         b = rgba7;
-    //         c = rgba8;
-    //     } else if(t_d == 1) {
-    //         a = rgba7;
-    //         b = rgba8;
-    //         c = rgba9;
-    //     }
-    //     gl_FragColor = one_vs_one(rgba5, a, b, c);
-    // }
-    // if(gl_FragColor.r < u_limit) {
-    //     gl_FragColor = vec4(0.0, 0.0, 0.0, u_round + 1.0);
-    // }
+
+    //2vs2
+    else if(t_d == 2 || t_c == 2 || t_b == 2 || t_a == 2) {
+        gl_FragColor = rgba5;
+        // gl_FragColor = vec4(0, 90, 0, 1);
+        vec4 a, b, c;
+        if(t_a == 2) {
+            a = rgba4;
+            b = rgba1;
+            c = rgba2;
+        } else if(t_b == 2) {
+            a = rgba2;
+            b = rgba3;
+            c = rgba6;
+        } else if(t_c == 2) {
+            a = rgba4;
+            b = rgba7;
+            c = rgba8;
+        } else if(t_d == 2) {
+            a = rgba7;
+            b = rgba8;
+            c = rgba9;
+        }
+        gl_FragColor = two_vs_two(rgba5, a, b, c);
+        gl_FragColor.g = 90.0;
+    } 
+    //1v1
+    else if(t_d == 1 || t_c == 1 || t_b == 1 || t_a == 1) {
+        gl_FragColor = rgba5;
+        // gl_FragColor = vec4(0, 80, 0, 1);
+        vec4 a, b, c;
+        if(t_a == 1) {
+            a = rgba4;
+            b = rgba1;
+            c = rgba2;
+        } else if(t_b == 1) {
+            a = rgba2;
+            b = rgba3;
+            c = rgba6;
+        } else if(t_c == 1) {
+            a = rgba4;
+            b = rgba7;
+            c = rgba8;
+        } else if(t_d == 1) {
+            a = rgba7;
+            b = rgba8;
+            c = rgba9;
+        }
+        gl_FragColor = one_vs_one(rgba5, a, b, c);
+        gl_FragColor.g = 80.0;
+    }
+    if(gl_FragColor.r < u_limit) {
+        gl_FragColor = vec4(0.0, 70.0, 0.0, u_round + 1.0);
+    }
 
 }

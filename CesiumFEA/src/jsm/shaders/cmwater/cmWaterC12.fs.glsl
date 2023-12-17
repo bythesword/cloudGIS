@@ -26,10 +26,15 @@ uniform sampler2D iChannel1;
 
 varying vec2 v_uv;
 varying vec3 v_cm_zbed;
-varying vec3 v_cm_zbed_CMAA;
+
 // varying vec3 v_cm_U;
 // varying vec3 v_cm_V;
 varying float v_dem;
+
+varying vec3 v_cm_r_CMAA;
+varying vec3 v_cm_g_CMAA;
+varying vec3 v_cm_b_CMAA;
+varying vec3 v_cm_a_CMAA;
 
 varying float test1;
 
@@ -79,7 +84,7 @@ vec4 CMC(vec2 uv, vec3 CM) {
     float v = w1 * CM[0] + w2 * CM[1] + w3 * CM[2];
     float dv = 1.0 / step;
     float vv = v;
-    vec4 fragColor = vec4(1);
+    vec4 fragColor = vec4(0);
 
     if(vv <= 0.08333333333333333) {
         fragColor = vec4(0.0, 0, 1.0, 1.0);
@@ -126,18 +131,23 @@ vec4 CMC6(vec2 uv, vec3 CM) {
     float v = w1 * CM[0] + w2 * CM[1] + w3 * CM[2];
     float dv = 1.0 / step;
     float vv = v;
-    vec4 fragColor = vec4(1, 0.6, 0, 1.0);
-    // vec4 fragColor = vec4(1);
-    // if(vv  < -1.0) {
-    //     fragColor = vec4(1, 0.6, 0, 1.0);
-    // }
-    //  else if(vv == 0.) {
-    //     fragColor = vec4(1, 1, 0, 1.0);
-    // } else if(vv == -1.0) {
-    //     fragColor = vec4(1, 0, 0, 1.0);
-    // } 
-    // else
-    if(vv <= 0.1 && vv >= 0.) {
+    // vec4 fragColor = vec4(1, 0.6, 0, 1.0);
+    vec4 fragColor = vec4(0);
+    if(vv < 0.0) {
+        fragColor = vec4(0.3);
+        discard;
+    } else if(vv == 0.0) {
+        if(u_enable_CMAA == true) {
+            if(v_dem == 0.0) {
+                discard;
+                gl_FragColor = vec4(0);
+            // return;
+            }
+        }
+        fragColor = vec4(0.5);
+        discard;
+    } else if(vv <= 0.1 && vv >= 0.) {
+        // fragColor = vec4(float(20.0 / 255.0), float(20.0 / 255.0), float(246.0 / 255.0), 1.0);
         fragColor = vec4(float(203.0 / 255.0), float(225.0 / 255.0), float(246.0 / 255.0), 1.0);
     } else if(vv > 0.1 && vv <= 0.15) {
         fragColor = vec4(float(160.0 / 255.0), float(210.0 / 255.0), float(234.0 / 255.0), 1.0);
@@ -149,9 +159,10 @@ vec4 CMC6(vec2 uv, vec3 CM) {
         fragColor = vec4(float(31.0 / 255.0), float(119.0 / 255.0), float(172.0 / 255.0), 1.0);
     } else if(vv > 0.6) {
         fragColor = vec4(float(17.0 / 255.0), float(100.0 / 255.0), float(165.0 / 255.0), 1.0);
-    } else if(vv > 6.0) {
-        fragColor = vec4(1, 0, 0, 1.0);
-    }
+    } 
+    // else if(vv > 0.6) {
+    //     fragColor = vec4(0, 1, 0, 1.0);
+    // }
     return fragColor;
 }
 
@@ -163,7 +174,8 @@ void main() {
 
     if(u_enable_CMAA == true) {
         if(v_dem == 0.0) {
-            // gl_FragColor = vec4(1);
+            // discard;
+            gl_FragColor = vec4(0);
             // return;
         }
     } else if(v_dem == 0.0) {
@@ -187,9 +199,9 @@ void main() {
 
     float v;
 
-    cm1 = v_cm_zbed_CMAA[0];
-    cm2 = v_cm_zbed_CMAA[1];
-    cm3 = v_cm_zbed_CMAA[2];
+    cm1 = v_cm_r_CMAA[0];
+    cm2 = v_cm_r_CMAA[1];
+    cm3 = v_cm_r_CMAA[2];
 
     // float cmP1 = mix(u_zbed_mm.x, u_zbed_mm.y, cm1);
     // float cmP2 = mix(u_zbed_mm.x, u_zbed_mm.y, cm2);
@@ -199,16 +211,39 @@ void main() {
     // cm2 = cmP2;
     // cm3 = cmP3;
 
-    if(cm1 > 49.0) {
-        gl_FragColor = vec4(100, 0.5, 0, 1);
-        return;
-    }
-    if(cm1 > 99.0) {
-        gl_FragColor = vec4(100, 0, 0, 1);
-        return;
-    }
-    gl_FragColor = CMC6(v_uv, vec3(cm1, cm2, cm3));                      //有波纹 
-    return;
+    // gl_FragColor = CMC6(v_uv, vec3(cm1, cm2, cm3));                      //有波纹 
+
+    // float vm1 = v_cm_g_CMAA[0];
+    // float vm2 = v_cm_g_CMAA[1];
+    // float vm3 = v_cm_g_CMAA[2];
+    // //1vs3
+    // if(vm1 > 99.0) {
+    //     gl_FragColor = vec4(1, 0, 0, 1);
+    //     return;
+    // }
+    // //2vs2
+    // if(vm1 > 89.0) {
+    //     gl_FragColor = vec4(1, 0.5, 0, 1);
+    //     return;
+    // }
+    // //1vs1
+    // if(vm1 > 79.0) {
+    //     gl_FragColor = vec4(1, 1, 0, 1);
+    //     return;
+    // }
+    // //超次
+    // if(vm1 > 69.0) {
+    //     gl_FragColor = vec4(0, 0, 0, 1);
+    //     return;
+    // }
+
+    // //超限
+    // if(vm1 > 49.0) {
+    //     gl_FragColor = vec4(0, 1, 0, 1);
+    //     return;
+    // }
+
+    // return;
 
     float speed = u_water_wave_speed;//.80;
 
@@ -232,7 +267,7 @@ void main() {
     vec4 highlights1 = texture(iChannel1, scaledUv.xy + iTime * speed / vec2(-10, 100));
     vec4 highlights2 = texture(iChannel1, scaledUv.xy + iTime * speed / vec2(10, 100));
 
-    vec4 background = CMC(vec2(uv) + avg(water1) * 0.025, vec3(cm1, cm2, cm3));                      //有波纹 
+    vec4 background = CMC6(vec2(uv) + avg(water1) * 0.025, vec3(cm1, cm2, cm3));                      //有波纹 
 
     water1.rgb = vec3(avg(water1));
     water2.rgb = vec3(avg(water2));

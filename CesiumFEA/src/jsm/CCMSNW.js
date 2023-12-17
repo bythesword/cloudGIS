@@ -24,6 +24,9 @@ import cmWS1 from './shaders/ccmIMG/wave2DDir.fs.glsl?raw';
 import cmWS2 from './shaders/ccmIMG/wave2DDirGabor.fs.glsl?raw';
 
 
+import cmflVS from './shaders/ccmIMG/cmfl.vs.glsl?raw';
+import framelineFS from './shaders/ccmIMG/frameline.fs.glsl?raw';
+
 // import { cmWaterC12FS, cmWaterBlue6ColorFS, cmWaterBlue12ColorFS, cmWaterBlue6ABS1FS } from "./shaders/cmwater/cmWater"
 import cmWaterC12FS from "./shaders/cmwater/cmWaterC12.fs.glsl?raw"
 import cmWaterBlue12ColorFS from "./shaders/cmwater/cmWaterBlue12.fs.glsl?raw"
@@ -74,6 +77,17 @@ class CCMSNW extends CCMBase {
         let tIndex = 0;
         this.textures = {};
 
+        this.framelines = [];
+        for (let ri = 0; ri < rows - 1; ri++) {
+            for (let ci = 0; ci < cols - 1; ci++) {
+                //12 
+                this.framelines.push((ci + 0) + (ri + 0) * cols);
+                this.framelines.push((ci + 1) + (ri + 0) * cols);
+                //13 
+                this.framelines.push((ci + 0) + (ri + 0) * cols);
+                this.framelines.push((ci + 0) + (ri + 1) * cols);
+            }
+        }
 
         //12
         //34
@@ -277,7 +291,7 @@ class CCMSNW extends CCMBase {
                 u_w: () => { return this.CMAA_w; },
                 u_h: () => { return this.CMAA_h; },
 
-                u_round: () => { return 10.0 },
+                u_round: () => { return 5.0 },
                 u_limit: () => { return -1.0 },
 
 
@@ -1063,7 +1077,28 @@ class CCMSNW extends CCMBase {
         else {
             this.updateOfListCommands = true;
         }
+        // if (this.loadDS) {
+        //     let attributes = {
+        //         "a_index": {
+        //             index: 0,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: this.framelines,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //     };
+        //     let uniformMap = {
+        //         u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+        //         u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+        //         u_dem_enable: () => { return this.getEnableDEM() },
+        //         u_dem_base: () => { return this.getBaseZ() },
 
+        //         u_z_enable_dem_rate: () => { return this.getRateDEM() },
+        //         u_z_baseZ: () => { return this.getBaseZ() },
+        //         u_z_rateZbed: () => { return this.getRateZbed() },
+        //     };
+        //     nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributes, uniformMap, { vertexShader: cmflVS, fragmentShader: framelineFS }, Cesium.PrimitiveType.LINES));
+
+        // }
         return nc;
 
     }

@@ -26,7 +26,7 @@ uniform float u_z_rateZbed;
 
 varying vec2 v_uv;
 varying vec3 v_cm_zbed;
-varying vec3 v_cm_zbed_CMAA;
+
 varying vec3 v_cm_U;
 varying vec3 v_cm_V;
 varying float v_dem;
@@ -36,6 +36,10 @@ varying vec2 v_cm_UV00;
 uniform sampler2D u_DS;
 uniform sampler2D u_DS_new;
 
+varying vec3 v_cm_r_CMAA;
+varying vec3 v_cm_g_CMAA;
+varying vec3 v_cm_b_CMAA;
+varying vec3 v_cm_a_CMAA;
 void main() {
     // v_uv = a_uv;
 
@@ -130,7 +134,10 @@ void main() {
     // }
     v_cm_UV00 = vec2(rgba1.g, rgba1.b);
     v_cm_zbed = vec3(rgba1.r, rgba2.r, rgba3.r);
-    v_cm_zbed_CMAA = vec3(texture2D(u_DS_new, a).r, texture2D(u_DS_new, b).r, texture2D(u_DS_new, c).r);
+    v_cm_r_CMAA = vec3(texture2D(u_DS_new, a).r, texture2D(u_DS_new, b).r, texture2D(u_DS_new, c).r);
+    v_cm_g_CMAA = vec3(texture2D(u_DS_new, a).g, texture2D(u_DS_new, b).g, texture2D(u_DS_new, c).g);
+    v_cm_b_CMAA = vec3(texture2D(u_DS_new, a).b, texture2D(u_DS_new, b).b, texture2D(u_DS_new, c).b);
+    v_cm_a_CMAA = vec3(texture2D(u_DS_new, a).a, texture2D(u_DS_new, b).a, texture2D(u_DS_new, c).a);
 
     // v_dem_CMAA = texture2D(u_DS_new, vec2(col/ u_DS_XY.x, row / u_DS_XY.y)).r;
     test1 = 1.0;
@@ -143,9 +150,9 @@ void main() {
 
     rgba1 = texture2D(u_DS, vec2(col / u_DS_XY.x, row / u_DS_XY.y));
     float z = 0.;
-    if(u_dem_enable == true)
-        // z = u_dem_base + u_z_rateZbed * (rgba1.a == 0.0 ? 0.0 : mix(v_cm_zbed.x, v_cm_zbed.y, rgba1.r)) + u_z_enable_dem_rate * (rgba1.a == 0.0 ? -50.0 : mix(u_dem_mm.x, u_dem_mm.y, rgba1.a));
-        z = u_dem_base + u_z_rateZbed * (rgba1.a == 0.0 ? 0.0 : mix(v_cm_zbed.x, v_cm_zbed.y, rgba1.r)) + u_z_enable_dem_rate * (rgba1.a == 0.0 ? 0.0 : mix(u_dem_mm.x, u_dem_mm.y, rgba1.a));
+    // if(u_dem_enable == true)
+    //     // z = u_dem_base + u_z_rateZbed * (rgba1.a == 0.0 ? 0.0 : mix(v_cm_zbed.x, v_cm_zbed.y, rgba1.r)) + u_z_enable_dem_rate * (rgba1.a == 0.0 ? -50.0 : mix(u_dem_mm.x, u_dem_mm.y, rgba1.a));
+    //     z = u_dem_base + u_z_rateZbed * (rgba1.a == 0.0 ? 0.0 : mix(v_cm_zbed.x, v_cm_zbed.y, rgba1.r)) + u_z_enable_dem_rate * (rgba1.a == 0.0 ? 0.0 : mix(u_dem_mm.x, u_dem_mm.y, rgba1.a));
 
     vec4 position = vec4(col * u_DS_CellSize, row * u_DS_CellSize, z, 1.0);
     gl_Position = czm_projection * czm_view * czm_model * position;
