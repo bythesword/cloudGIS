@@ -48,6 +48,21 @@ class CCMSNW extends CCMBase {
         else {
             this.setting.CMAA = true;
         }
+        this.setting.dynWindMapMM = {
+            start: {
+                x: false,
+                y: false,
+            },
+            end: {
+                x: false,
+                y: false,
+            },
+            range: 10,
+        }
+        this.viewer = false;
+        if (typeof this.setting.viewer != "undefined" && this.setting.viewer !== false) {
+            this.viewer = this.setting.viewer;
+        }
         this.CMAA = false;
         this.CMAA1 = false;
         this.CMAA2 = false;
@@ -63,6 +78,13 @@ class CCMSNW extends CCMBase {
         }
         else
             window.GTS = this.GTS;
+        this.WMs = [
+            {
+                index: [],
+                tp: [],
+                uv: [],
+            }
+        ];
         this.CMs = [
             {
                 index: [],
@@ -118,6 +140,7 @@ class CCMSNW extends CCMBase {
                 this.CMs[0].tp.push(3, 4, 5);
             }
         }
+        this.WMs = JSON.parse(JSON.stringify(this.CMs[0]));
         /** data source ,已有的数据源，GL的texture */
         this.DS = [];
         // this.setting.currentLevel = 0;
@@ -148,7 +171,7 @@ class CCMSNW extends CCMBase {
     getTFL(frameState, peroneJSON, modelMatrix) {
         let list = [];
         let nc = [];
-        if (this.loadDS === false || this.updateOfListCommands === true) {
+        if (this.loadDS === false && this.updateOfListCommands === true) {
             if (this.loadDSing === false)
                 this.initData(frameState.context);//替换gl 同 cesium
             if (this.setting.cmType == "wind") {
@@ -168,11 +191,12 @@ class CCMSNW extends CCMBase {
                     this.FBO2 = this.createFramebuffer(frameState.context);
                 }
             }
-        } else if (this.setting.cmType == "wind" && (this.resizeFlag == true || this.renewFlag == true)) {
+        } else if (this.setting.cmType == "wind" && (this.resizeFlag == true || this.renewFlag == true) && this.updateOfListCommands === true) {
             this.FBO1.destroy();
             this.FBO2.destroy();
             this.FBO1 = this.createFramebuffer(frameState.context);
             this.FBO2 = this.createFramebuffer(frameState.context);
+            this.set_numParticles(frameState.context, this.setting.wind.counts);//替换gl 同 cesium
         }
 
 
@@ -356,8 +380,17 @@ class CCMSNW extends CCMBase {
                 u_channel0: () => { return this.particleStateTexture0; },
 
                 u_pointSize: () => { return this.getWMPointSize(); },
+                //20231221
+                u_xy_mm: () => {
+                    return {
+                        x: this.setting.dynWindMapMM.start.x,
+                        y: this.setting.dynWindMapMM.start.y,
+                        z: this.setting.dynWindMapMM.end.x,
+                        w: this.setting.dynWindMapMM.end.y
+                    }
+                },
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
             };
-
             let attributesPoints = {
                 "a_index": {
                     index: 0,
@@ -412,14 +445,16 @@ class CCMSNW extends CCMBase {
                 "a_index": {
                     index: 0,
                     componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.index,//normal array
+                    vertexBuffer: this.WMs.index,//normal array
+                    // vertexBuffer: peroneJSON.index,//normal array ,全屏&&全部三角形
                     componentDatatype: Cesium.ComponentDatatype.FLOAT
                 },
 
                 "a_tp": {
                     index: 1,
                     componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.tp,//normal array
+                    vertexBuffer: this.WMs.tp,//normal array
+                    // vertexBuffer: peroneJSON.tp,//normal array,全屏&&全部三角形
                     componentDatatype: Cesium.ComponentDatatype.FLOAT
                 },
             };
@@ -483,11 +518,21 @@ class CCMSNW extends CCMBase {
 
                 u_color_ramp: () => { return this.colorRampTexture; },
                 u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+                // u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
                 u_channel0: () => { return this.FBO1.getColorTexture(0); },
 
                 u_UVs: () => { return false; },
                 u_CMType: () => { return 1; },//1=zbed,2=u,3=v
                 u_UV_and: () => { return this.getWMUV_and_or() },
+                //20231221
+                u_xy_mm: () => {
+                    return {
+                        x: this.setting.dynWindMapMM.start.x,
+                        y: this.setting.dynWindMapMM.start.y,
+                        z: this.setting.dynWindMapMM.end.x,
+                        w: this.setting.dynWindMapMM.end.y
+                    }
+                },
 
             };
             nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMapUVS, { vertexShader: uvsVS, fragmentShader: uvsFS }, Cesium.PrimitiveType.TRIANGLES, [this.FBO1], undefined, true));//copy uvs ,需要透明，copy的时候
@@ -1087,6 +1132,11 @@ class CCMSNW extends CCMBase {
         //         },
         //     };
         //     let uniformMap = {
+        //         // u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+        //         u_DS: () => {
+        //             // console.log(this.DS[this.getCurrentLevelByIndex()])
+        //             return this.DS[this.getCurrentLevelByIndex()];
+        //         },
         //         u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
         //         u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
         //         u_dem_enable: () => { return this.getEnableDEM() },
@@ -1275,7 +1325,13 @@ class CCMSNW extends CCMBase {
     // wind map
 
     set_numParticles(context, numParticles) {
-        if (this.particleStateTexture0) return;
+        let temp_numParticles = false;
+        if (this.particleStateTexture0) {
+            // return;
+            this.particleStateTexture0.destroy();
+            this.particleStateTexture1.destroy();
+            temp_numParticles = this._numParticles;
+        }
         // let width = context.drawingBufferWidth;
         // let height = context.drawingBufferHeight;
         // this.w = width;
@@ -1305,10 +1361,14 @@ class CCMSNW extends CCMBase {
         this.particleStateTexture0 = this.createTexture(colorTextureOptions, particleState);
         this.particleStateTexture1 = this.createTexture(colorTextureOptions, particleState);
 
-        const particleIndices = new Float32Array(this._numParticles);
-        for (let i = 0; i < this._numParticles; i++) particleIndices[i] = i;
-        this.particleIndices = particleIndices;
-        this.particleIndexBuffer = this.createVAO(context, particleIndices);// = util.createBuffer(gl, particleIndices);
+        if (temp_numParticles === this._numParticles && this.particleIndexBuffer) { }
+        else {
+
+            const particleIndices = new Float32Array(this._numParticles);
+            for (let i = 0; i < this._numParticles; i++) particleIndices[i] = i;
+            this.particleIndices = particleIndices;
+            this.particleIndexBuffer = this.createVAO(context, particleIndices);// = util.createBuffer(gl, particleIndices);
+        }
     }
     get_numParticles() {
         return this._numParticles;
@@ -1677,6 +1737,192 @@ class CCMSNW extends CCMBase {
         else
             return 0.105;
     }
+
+    /**
+     * 核心入口，cesium规范
+    * @param {FrameState} frameState
+    */
+    update(frameState) {
+        if (this.setting.cmType == "wind" && this.viewer !== false) {
+            this.checkWindMapSize();
+            // this.setUpdateOfListCommands(true);
+        }
+        else if (this.setting.cmType == "wind" && this.viewer === false) {
+            // console.log("风场模式,但input的JSON中没有viewer");
+            throw new Error("风场模式,但input的JSON中没有viewer");
+        }
+        if (typeof this.frameState == "undefined")
+            this.frameState = frameState;
+        if (this.visible)
+            if (this.initFinish)
+                for (let perOne of this.getCommands(frameState, this._modelMatrix)) {
+                    for (let perNC of perOne)
+                        frameState.commandList.push(perNC);
+                }
+    }
+    checkWindMapSize() {
+        let ds = this.oneJSON.dem;
+        let rate = 1.0;
+        let mm = this.setting.dynWindMapMM;
+        let rect = this.getViewExtend();
+        let min = Cesium.Cartesian3.fromDegrees(rect.minx, rect.miny);
+        let max = Cesium.Cartesian3.fromDegrees(rect.maxx, rect.maxy);
+
+
+        let orgin_min = Cesium.Matrix4.multiplyByPoint(this._modelMatrix_inverse, min, new Cesium.Cartesian3());
+        let orgin_max = Cesium.Matrix4.multiplyByPoint(this._modelMatrix_inverse, max, new Cesium.Cartesian3());
+        let doit = false;
+        let new_mm = {
+            min: {
+                x: parseInt(orgin_min.x / ds.cellsize),
+                y: parseInt(orgin_min.y / ds.cellsize)
+            },
+            max: {
+                x: parseInt(orgin_max.x / ds.cellsize),
+                y: parseInt(orgin_max.y / ds.cellsize)
+            }
+        };
+
+        if (mm.start.x === false) {
+            doit = true;
+        }
+        else if ((new_mm.min.x < mm.start.x && mm.start.x > 0) || (new_mm.min.y < mm.start.y && mm.start.y > 0)
+            || (new_mm.max.x > mm.end.x && mm.end.x < ds.cols) || (new_mm.max.y > mm.end.y && mm.end.y < ds.rows)
+            || (new_mm.max.x < mm.end.x && mm.end.x == ds.cols) || (new_mm.max.y < mm.end.y && mm.end.y == ds.rows)
+            || (mm.end.x - new_mm.max.x > mm.range * rate) || (mm.end.y - new_mm.max.y > mm.range * rate)
+            || (new_mm.min.x - mm.start.x > mm.range * rate) || (new_mm.min.y - mm.start.x > mm.range * rate)
+        ) {
+            doit = true;
+        }
+        if (doit) {
+            // console.log(mm, new_mm);
+            if (orgin_min.x <= 0) {
+                mm.start.x = 0;
+            }
+            else {
+                mm.start.x = parseInt(orgin_min.x / ds.cellsize);
+                if (mm.start.x - mm.range <= 0) {
+                    mm.start.x = 0;
+                }
+                else {
+                    mm.start.x -= mm.range;
+                }
+            }
+            if (orgin_min.y <= 0) {
+                mm.start.y = 0;
+            }
+            else {
+                mm.start.y = parseInt(orgin_min.y / ds.cellsize);
+                if (mm.start.y - mm.range <= 0) {
+                    mm.start.y = 0;
+                }
+                else {
+                    mm.start.y -= mm.range;
+                }
+            }
+
+            if (orgin_max.x >= ds.cols * ds.cellsize) {
+                mm.end.x = ds.cols;
+            }
+            else {
+                mm.end.x = parseInt(orgin_max.x / ds.cellsize);
+                if (mm.end.x + mm.range >= ds.cols * ds.cellsize) {
+                    mm.end.x = ds.cols;
+                }
+                else {
+                    mm.end.x += mm.range;
+                }
+            }
+            if (orgin_max.y >= ds.rows * ds.cellsize) {
+                mm.end.y = ds.rows;
+            }
+            else {
+                mm.end.y = parseInt(orgin_max.y / ds.cellsize);
+                if (mm.end.y + mm.range >= ds.rows * ds.cellsize) {
+                    mm.end.y = ds.rows;
+                }
+                else {
+                    mm.end.y += mm.range;
+                }
+            }
+            this.renewNetworkDS(mm);
+            this.renewFlag = true;
+            this.updateOfListCommands = true;
+
+        }
+
+    }
+    renewNetworkDS(mm) {
+        let cols = this.oneJSON.dem.cols;
+        let rows = this.oneJSON.dem.rows;
+        this.WMs =
+        {
+            index: [],
+            tp: [],
+            uv: [],
+        }
+            ;
+        for (let ri = mm.start.y; ri < mm.end.y; ri++) {
+            for (let ci = mm.start.x; ci < mm.end.x; ci++) {
+                //124
+                this.WMs.index.push((ci + 0) + (ri + 0) * cols);
+                this.WMs.index.push((ci + 1) + (ri + 0) * cols);
+                this.WMs.index.push((ci + 1) + (ri + 1) * cols);
+                this.WMs.tp.push(0, 1, 2);
+                //134
+                this.WMs.index.push((ci + 0) + (ri + 0) * cols);
+                this.WMs.index.push((ci + 0) + (ri + 1) * cols);
+                this.WMs.index.push((ci + 1) + (ri + 1) * cols);
+                this.WMs.tp.push(3, 4, 5);
+            }
+        }
+    }
+    getViewExtend() {
+        let params = {};
+        let extend = this.viewer.camera.computeViewRectangle();
+        if (typeof extend === "undefined") {
+            //2D下会可能拾取不到坐标，extend返回undefined,因此作如下转换
+            let canvas = this.viewer.scene.canvas;
+            let upperLeft = new Cesium.Cartesian2(0, 0); //canvas左上角坐标转2d坐标
+            let lowerRight = new Cesium.Cartesian2(
+                canvas.clientWidth,
+                canvas.clientHeight
+            ); //canvas右下角坐标转2d坐标
+
+            let ellipsoid = this.viewer.scene.globe.ellipsoid;
+            let upperLeft3 = this.viewer.camera.pickEllipsoid(upperLeft, ellipsoid); //2D转3D世界坐标
+
+            let lowerRight3 = this.viewer.camera.pickEllipsoid(lowerRight, ellipsoid); //2D转3D世界坐标
+
+            let upperLeftCartographic = this.viewer.scene.globe.ellipsoid.cartesianToCartographic(upperLeft3); //3D世界坐标转弧度
+            let lowerRightCartographic = this.viewer.scene.globe.ellipsoid.cartesianToCartographic(lowerRight3); //3D世界坐标转弧度
+
+            let minx = Cesium.Math.toDegrees(upperLeftCartographic.longitude); //弧度转经纬度
+            let maxx = Cesium.Math.toDegrees(lowerRightCartographic.longitude); //弧度转经纬度
+
+            let miny = Cesium.Math.toDegrees(lowerRightCartographic.latitude); //弧度转经纬度
+            let maxy = Cesium.Math.toDegrees(upperLeftCartographic.latitude); //弧度转经纬度
+
+            console.log("经度：" + minx + "----" + maxx);
+            console.log("纬度：" + miny + "----" + maxy);
+
+            params.minx = minx;
+            params.maxx = maxx;
+            params.miny = miny;
+            params.maxy = maxy;
+        } else {
+            //3D获取方式
+            params.maxx = Cesium.Math.toDegrees(extend.east);
+            params.maxy = Cesium.Math.toDegrees(extend.north);
+
+            params.minx = Cesium.Math.toDegrees(extend.west);
+            params.miny = Cesium.Math.toDegrees(extend.south);
+        }
+
+        // 返回屏幕所在经纬度范围
+        return params;
+    };
+
 }
 
 export { CCMSNW };

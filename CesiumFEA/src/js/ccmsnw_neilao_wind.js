@@ -34,7 +34,7 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
     fullscreenButton: false, //右下角的全屏按钮
 });
 viewer.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(116.207069, 39.952786, 1000),
+    destination: Cesium.Cartesian3.fromDegrees(116.3207069, 40.015, 3500),
     orientation: {
         heading: Cesium.Math.toRadians(0.0),
         pitch: Cesium.Math.toRadians(-90.0),
@@ -65,7 +65,7 @@ let setting = {
     },
     wind: {
         fadeOpacity: 0.996, // how fast the particle trails fade on each frame
-        speedFactor: 0.25, // how fast the particles move
+        speedFactor: 0.125, // how fast the particles move
         dropRate: 0.003, // how often the particles move to a random place
         dropRateBump: 0.01, // drop rate increase relative to individual particle spe
         defaultRampColors: {
@@ -78,8 +78,10 @@ let setting = {
             0.6: '#f46d43',
             1.0: '#d53e4f'
         },
+        counts:1000,
+        pointSize: 1,
     },
-    cmType: "cmWaterBlue6ABS1",//cm,cmBLue,wind
+    cmType: "wind",//cm,cmBLue,wind
     cm: "zbed",
     viewer:window.viewer ,
 };

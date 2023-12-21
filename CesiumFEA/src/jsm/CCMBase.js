@@ -248,7 +248,7 @@ class CCMBase {
 
         this.oneJSON = oneJSON;
         this._modelMatrix = modelMatrix
-
+        this._modelMatrix_inverse = Cesium.Matrix4.inverse(this._modelMatrix, new Cesium.Matrix4());
         // if (setting) {
         //     for (let i in setting) {
         //         let perOne = setting[i];

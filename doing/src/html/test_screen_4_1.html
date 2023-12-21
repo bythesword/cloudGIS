@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite App</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #cesiumContainer,
+        #container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+
+        #container {
+            right: 0;
+        }
+
+        #info {
+            top: 30px;
+        }
+
+        .dg.a {
+            /* float: left!important; */
+            margin-right: 7px !important;
+            overflow-y: visible;
+            margin-top: 42px !important;
+        }
+
+        #cesiumContainer canvas {
+            image-rendering: auto !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script type="module" src="./test_screen_4_1.js"></script>
+</body>
+
+</html>

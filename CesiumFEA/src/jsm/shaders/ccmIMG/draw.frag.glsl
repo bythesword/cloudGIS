@@ -1,6 +1,7 @@
 precision mediump float;
 
 uniform sampler2D u_wind;
+uniform vec2 u_DS_XY;
 // uniform vec2 u_wind_min;
 // uniform vec2 u_wind_max;
 uniform float u_wind_Umin;
@@ -9,15 +10,33 @@ uniform float u_wind_Umax;
 uniform float u_wind_Vmax;
 uniform sampler2D u_color_ramp;
 
+//20231221
+uniform vec4 u_xy_mm;//wind map fix ,other shader in js don't 
+
 varying vec2 v_particle_pos;
 varying vec2 ccc;
 varying float iii;
 
 void main() {
+    //20231221 start
+    vec2 mmx = vec2(u_xy_mm.x, u_xy_mm.z);
+    vec2 mmy = vec2(u_xy_mm.y, u_xy_mm.w);
+    // float u = (mix(mmx.x, mmx.y, v_particle_pos.x) - mmx.x) / (mmx.y - mmx.x);
+    // float v = (mix(mmy.x, mmy.y, v_particle_pos.y) - mmy.x) / (mmy.y - mmy.x);
+    float u = ((mmx.y - mmx.x) * v_particle_pos.x + mmx.x) / u_DS_XY.x;
+    float v = ((mmy.y - mmy.x) * v_particle_pos.y + mmy.x) / u_DS_XY.y;
+    //20231221 end
+
     vec2 u_wind_min = vec2(u_wind_Umin, u_wind_Vmin);
     vec2 u_wind_max = vec2(u_wind_Umax, u_wind_Vmax);
+
     // 水平速度为红色，垂直速度为绿色。
-    vec2 puv = texture2D(u_wind, vec2(v_particle_pos.x, v_particle_pos.y)).gb;
+    // vec2 puv = texture2D(u_wind, vec2(v_particle_pos.x, v_particle_pos.y)).gb;
+
+    //20231221 change ,fix range of MM
+    vec2 puv = texture2D(u_wind, vec2(u, v)).gb;
+    //20231212 end
+
     vec2 velocity = mix(u_wind_min, u_wind_max, puv);//速度，在max，min，在png的颜色值中
     float speed_t = length(velocity) / length(u_wind_max);
 
