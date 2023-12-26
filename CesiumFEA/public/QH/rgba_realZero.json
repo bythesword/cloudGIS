@@ -1,18 +1,18 @@
 {
     "dem": {
-        "cellsize": 34.136850676348,
-        "coordinate_x": 12418323.100646,
-        "coordinate_y": 4148832.7248636,
+        "cellsize": 10.0,
+        "coordinate_x": 432337.02572345,
+        "coordinate_y": 4424524.0370811,
         "start_col": 0,
         "start_row": 0,
-        "cols": 1254,
-        "rows": 1265
+        "cols": 2650,
+        "rows": 1605
     },
     "dataContent": {
         "DEM": {
             "global_MM": true,
-            "max": 1658.068,
-            "min": 257.0,
+            "max": 100.3722,
+            "min": 22.97653,
             "filterKind": 1,
             "filterValue": [
                 0.0,
@@ -21,20 +21,20 @@
             "filter": false
         },
         "zbed": {
-            "global_MM": false,
-            "max": 25.419131546127044,
+            "global_MM": true,
+            "max": 344.45159889518396,
             "min": 0.0,
             "filterKind": 1,
             "filterValue": [
                 0.0,
-                0.15
+                0.01
             ],
-            "filter": true
+            "filter": false
         },
         "U": {
             "global_MM": true,
-            "max": 7.037247770844766,
-            "min": -3.5008236993007813,
+            "max": 2.1788326709035064,
+            "min": -0.9216353016329683,
             "filterKind": 1,
             "filterValue": [
                 0.0,
@@ -44,8 +44,8 @@
         },
         "V": {
             "global_MM": true,
-            "max": 3.7297494517057856,
-            "min": -8.067519078356014,
+            "max": 2.668559864953267,
+            "min": -1.6041612940586352,
             "filterKind": 1,
             "filterValue": [
                 0.0,
@@ -56,9 +56,10 @@
     },
     "data": [
         {
-            "png": "/public/RGBA/RGBA1.png",
+            "png": "/public/QH/qh-zeroRGBA.png",
             "zbed": {
-                "max": 25.419131546127044,
+                "global_MM": true,
+                "max": 344.45159889518396,
                 "min": 0.0,
                 "filterKind": 1,
                 "filterValue": [
@@ -68,8 +69,9 @@
                 "filter": false
             },
             "U": {
-                "max": 7.037247770844766,
-                "min": -3.5008236993007813,
+                "global_MM": true,
+                "max": 2.1788326709035064,
+                "min": -0.9216353016329683,
                 "filterKind": 1,
                 "filterValue": [
                     0.0,
@@ -78,8 +80,9 @@
                 "filter": false
             },
             "V": {
-                "max": 3.7297494517057856,
-                "min": -8.067519078356014,
+                "global_MM": true,
+                "max": 2.668559864953267,
+                "min": -1.6041612940586352,
                 "filterKind": 1,
                 "filterValue": [
                     0.0,
@@ -88,6 +91,5 @@
                 "filter": false
             }
         }
-
     ]
 }

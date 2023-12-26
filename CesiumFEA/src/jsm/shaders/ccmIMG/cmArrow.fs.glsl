@@ -23,6 +23,7 @@ uniform vec2 u_V_mm;
 // uniform vec2 u_filterValue_U;
 // uniform vec2 u_filterValue_V;
 
+uniform bool u_filterUVofZeroOfGB;
 varying vec2 v_uv;
 // varying vec3 v_cm_zbed;
 varying vec3 v_cm_U;
@@ -67,9 +68,9 @@ vec2 xy4 = vec2(1, -1.);
 float arrow(vec2 uv, vec2 v) {
     float h = 0.3 + 0.4 * thc(4., 2.);
     float d1 = sdEquilateralTriangle(uv - vec2(0., 0.5 - h), v);
-    float s1 = step(d1, -0.5 + 0.1 * length(v));//箭头大小
+    float s1 = step(d1, -0.35 + 0.1 * length(v));//箭头大小
 
-    float d2 = sdBox(uv - vec2(0., -h * .163), vec2(0.05 + 0.05 * length(v), 0.2 + 0.2 * length(v)));
+    float d2 = sdBox(uv - vec2(0., -h * .1), vec2(0.05 + 0.05 * length(v), 0.2 + 0.2 * length(v)));
     float s2 = step(d2, 0.);
 
     //return s2;
@@ -137,12 +138,34 @@ vec3 CMC(vec2 uv, vec3 CM) {
 }
 
 void main() {
+    float a_sub_a=0.0001;
     if(v_dem == 0.0)
         discard;
+    float zeroU = (mix(u_U_mm.x, u_U_mm.y, 0.0) - u_U_mm.x) / (u_U_mm.y - u_U_mm.x);
+    float zeroV = (mix(u_V_mm.x, u_V_mm.y, 0.0) - u_V_mm.x) / (u_V_mm.y - u_V_mm.x);
+    //0为zero时，而非插值结果时，与数据格式相关
+    if(u_filterUVofZeroOfGB == true) {
+        if(v_cm_UV00.x == 0.0 && v_cm_UV00.y == 0.0)
+            discard;
+    } else {
 
-    if(v_cm_UV00.x == 0.0 && v_cm_UV00.y == 0.0)
-        discard;
+        if(abs(v_cm_UV00.x - zeroU) < a_sub_a && abs(v_cm_UV00.y - zeroV) < a_sub_a) {
+            discard;
+        }
+    }
+
     vec2 uv000 = mix(vec2(u_U_mm.x, u_V_mm.x), vec2(u_U_mm.y, u_V_mm.y), v_cm_UV00);
+
+    //0为zero时，而非插值结果时，与数据格式相关
+    if(u_filterUVofZeroOfGB == true) {
+        if(v_cm_UV00.x == 0.0 && v_cm_UV00.y == 0.0) {
+            uv000 = vec2(0);
+        }
+    } else {
+        if(abs(v_cm_UV00.x - zeroU) < a_sub_a && abs(v_cm_UV00.y - zeroV) < a_sub_a) {
+            uv000 = vec2(0);
+        }
+    }
     // vec3 CM = sqrt(exp2(v_cm_U) + exp2(v_cm_V));
     // vec3 CM = vec3(sqrt(exp2(v_cm_U.x) + exp2(v_cm_V.x)), sqrt(exp2(v_cm_U.y) + exp2(v_cm_V.y)), sqrt(exp2(v_cm_U.z) + exp2(v_cm_V.z)));
     vec3 CM = vec3(sqrt(v_cm_U.x * v_cm_U.x + v_cm_V.x * v_cm_V.x), sqrt(v_cm_U.y * v_cm_U.y + v_cm_V.y * v_cm_V.y), sqrt(v_cm_U.z * v_cm_U.z + v_cm_V.z * v_cm_V.z));
@@ -151,7 +174,7 @@ void main() {
     vec2 uv1 = (v_uv * 4. - (1.95) * 1.0) / 1.0;
 
     // float vector1 = sdVectorArrow(uv1, xy1);
-    float vector1 = sdVectorArrow(uv1, uv000 / 1.5);
+    float vector1 = sdVectorArrow(uv1, uv000 / 0.5);
 
     vec3 mixcolor = vec3(bgColor);
 

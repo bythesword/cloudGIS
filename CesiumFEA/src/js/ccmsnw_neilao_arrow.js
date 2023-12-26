@@ -7,8 +7,8 @@ import { CCMSNW } from "../jsm/CCMSNW"
 
 import { TFL } from "../jsm/TFL";
 // import * as rgbaJSON from "../../public/qinghe/rgba.json";
-import * as rgbaJSON from "../../public/QH/rgba.json";
-
+// import * as rgbaJSON from "../../public/QH/rgba.json";
+import * as rgbaJSON from "../../public/QH/rgba_realZero.json";
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlZjNiZTgxOS0xZDYwLTQzNzctYWRkOS00ZjJkZDI2YjA5MGMiLCJpZCI6ODMyOTksImlhdCI6MTY0NTY3MTU4NH0.2bu4bjqgk1yx5JMdC1iU8j65IlMztD4KI11scmH_sHQ';
 
 
@@ -34,7 +34,7 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
     fullscreenButton: false, //右下角的全屏按钮
 });
 viewer.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(116.207069, 39.952786, 1000),
+    destination: Cesium.Cartesian3.fromDegrees(116.32907069, 40.025, 1500),
     orientation: {
         heading: Cesium.Math.toRadians(0.0),
         pitch: Cesium.Math.toRadians(-90.0),
@@ -48,40 +48,9 @@ window.viewer = viewer;
 var origin = Cesium.Cartesian3.fromDegrees(116.207069, 39.952786, 5)
 var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin)
 
-// var origin = Cesium.Cartesian3.fromDegrees(116.207069, 39.952786, 0)
-//  var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin)
-
-
-
-
-// console.log("origin",origin)
-
-// // Rotate a point 45 degrees counterclockwise around the x-axis.
-// // const p = new Cesium.Cartesian3(5, 6, 7);
-// const m = Cesium.Matrix3.fromRotationX(Cesium.Math.toRadians(0.30));
-// console.log("m",m);
-
-
-// const rotated = Cesium.Matrix3.multiplyByVector(m, origin, new Cesium.Cartesian3());
-// console.log("rotated",rotated);
-
-
-// var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(rotated)
-
-// // Cesium.Matrix4.multiplyByMatrix3(modelMatrix, rotation, modelMatrix);
-
-
-
-
-
-
-
-
-
-
-
 
 //目前使用单个网格，测试
+
 let setting = {
     z: {
         // RateDEM: 10,
@@ -96,7 +65,7 @@ let setting = {
     },
     wind: {
         fadeOpacity: 0.996, // how fast the particle trails fade on each frame
-        speedFactor: 0.25, // how fast the particles move
+        speedFactor: 0.125, // how fast the particles move
         dropRate: 0.003, // how often the particles move to a random place
         dropRateBump: 0.01, // drop rate increase relative to individual particle spe
         defaultRampColors: {
@@ -109,12 +78,14 @@ let setting = {
             0.6: '#f46d43',
             1.0: '#d53e4f'
         },
+        counts: 1000,
+        pointSize: 1,
+        filterUVofZeroOfGB: false,
     },
-    //cmWaterC12,有未知原因的错误，未定位，使用cmWater代替
-    cmType: "cmWater",//cmWater,cmWaterBlue12,cmWaterBlue6ABS1,cmWaterC12,cm,cmBlue,cmBlue6
+    cmType: "arrow",//cm,cmBLue,wind
     cm: "zbed",
-    CMAA: true,
-    framlines: true,
+    viewer: window.viewer,
+    // framlines: true,
 };
 let oneCCM = new CCMSNW(modelMatrix, rgbaJSON, setting);
 

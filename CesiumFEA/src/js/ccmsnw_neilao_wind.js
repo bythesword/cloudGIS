@@ -21,7 +21,7 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
     imageryProvider: new Cesium.UrlTemplateImageryProvider({
         // url: "https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",//image map
         // url: "http://webrd02.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}",//行政普通
-        url: 'https://t0.tianditu.gov.cn/vec_w/wmts?' +            'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&' +            'TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk=' + 'b826df734706d11202d422f9166be9a5',
+        url: 'https://t0.tianditu.gov.cn/vec_w/wmts?' + 'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&' + 'TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk=' + 'b826df734706d11202d422f9166be9a5',
         tilingScheme: new Cesium.WebMercatorTilingScheme(),
     }),
     animation: false,    //左下角的动画仪表盘
@@ -34,7 +34,7 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
     fullscreenButton: false, //右下角的全屏按钮
 });
 viewer.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(116.3207069, 40.015, 3500),
+    destination: Cesium.Cartesian3.fromDegrees(116.3297069, 40.025, 1500),
     orientation: {
         heading: Cesium.Math.toRadians(0.0),
         pitch: Cesium.Math.toRadians(-90.0),
@@ -78,12 +78,19 @@ let setting = {
             0.6: '#f46d43',
             1.0: '#d53e4f'
         },
-        counts:1000,
+        counts: 16000,
         pointSize: 1,
+        scaleOfUV: 13,
+        filterUVofZeroOfGB: false,
     },
     cmType: "wind",//cm,cmBLue,wind
     cm: "zbed",
-    viewer:window.viewer ,
+    viewer: window.viewer,
+    // framlines: true,
+    dynWindMapMM: {
+        range: 10
+    },
+
 };
 let oneCCM = new CCMSNW(modelMatrix, rgbaJSON, setting);
 

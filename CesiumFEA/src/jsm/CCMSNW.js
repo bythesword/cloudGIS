@@ -7,6 +7,7 @@ import drawFrag from './shaders/ccmIMG/draw.frag.glsl?raw';
 import quadVert from './shaders/ccmIMG/quad.vert.glsl?raw';
 import opFrag from './shaders/ccmIMG/op.frag.glsl?raw';
 import NupdateFrag from './shaders/ccmIMG/Nupdate.frag.glsl?raw';
+// import NupdateNLFrag from './shaders/ccmIMG/Nupdate.NL.frag.glsl?raw';
 import cpFS from './shaders/ccmIMG/cp.fs.glsl?raw';
 import cpTextureFS from './shaders/ccmIMG/cpTexture.fs.glsl?raw';//修改显示u_wind
 import uvsVS from './shaders/ccmIMG/uvs.vs.glsl?raw';
@@ -57,8 +58,12 @@ class CCMSNW extends CCMBase {
                 x: false,
                 y: false,
             },
-            range: 10,
+            // range: 10,
         }
+        if (typeof this.inputSetting.dynWindMapMM == "undefined" || typeof this.inputSetting.dynWindMapMM.range == "undefined")
+            this.setting.dynWindMapMM.range = 50;
+        else
+            this.setting.dynWindMapMM.range = this.inputSetting.dynWindMapMM.range;
         this.viewer = false;
         if (typeof this.setting.viewer != "undefined" && this.setting.viewer !== false) {
             this.viewer = this.setting.viewer;
@@ -99,15 +104,20 @@ class CCMSNW extends CCMBase {
         let tIndex = 0;
         this.textures = {};
 
-        this.framelines = [];
+        this.framelines = {
+            index: [],
+            tp: []
+        };
         for (let ri = 0; ri < rows - 1; ri++) {
             for (let ci = 0; ci < cols - 1; ci++) {
                 //12 
-                this.framelines.push((ci + 0) + (ri + 0) * cols);
-                this.framelines.push((ci + 1) + (ri + 0) * cols);
+                this.framelines.index.push((ci + 0) + (ri + 0) * cols);
+                this.framelines.index.push((ci + 1) + (ri + 0) * cols);
+                this.framelines.tp.push(0, 1);
                 //13 
-                this.framelines.push((ci + 0) + (ri + 0) * cols);
-                this.framelines.push((ci + 0) + (ri + 1) * cols);
+                this.framelines.index.push((ci + 0) + (ri + 0) * cols);
+                this.framelines.index.push((ci + 0) + (ri + 1) * cols);
+                this.framelines.tp.push(0, 2);
             }
         }
 
@@ -140,7 +150,8 @@ class CCMSNW extends CCMBase {
                 this.CMs[0].tp.push(3, 4, 5);
             }
         }
-        this.WMs = JSON.parse(JSON.stringify(this.CMs[0]));
+        this.WMs = this.CMs[0];// JSON.parse(JSON.stringify(this.CMs[0]));
+        this.WMs_origin = this.CMs[0];
         /** data source ,已有的数据源，GL的texture */
         this.DS = [];
         // this.setting.currentLevel = 0;
@@ -426,9 +437,22 @@ class CCMSNW extends CCMBase {
                 u_color_ramp: () => { return this.colorRampTexture; },
                 u_wind: () => { return this.DS[this.getCurrentLevelByIndex()]; },
                 u_channel0: () => { return this.particleStateTexture0; },
-
+                U_scaleOfUV: () => { return this.setting.wind.scaleOfUV; },
+                u_filterUVofZeroOfGB: () => { return this.setting.wind.filterUVofZeroOfGB; },
+                //20231226
+                u_xy_mm: () => {
+                    return {
+                        x: this.setting.dynWindMapMM.start.x,
+                        y: this.setting.dynWindMapMM.start.y,
+                        z: this.setting.dynWindMapMM.end.x,
+                        w: this.setting.dynWindMapMM.end.y
+                    }
+                },
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
             };
             // // // // // // // update to  PST2
+            // nc.push(this.createCommandOfCompute(uniformMapPointsUP, NupdateNLFrag, this.particleStateTexture1));
+
             nc.push(this.createCommandOfCompute(uniformMapPointsUP, NupdateFrag, this.particleStateTexture1));
             // nc.push(this.createCommandOfCompute(uniformMapPointsUP, this.material.NupdateFrag, this.particleStateTexture1));
             let uniformMapPointsUPCP = {
@@ -857,6 +881,7 @@ class CCMSNW extends CCMBase {
 
                 u_UVs: () => { return false; },
                 u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+                u_filterUVofZeroOfGB: () => { return this.setting.wind.filterUVofZeroOfGB; },
 
             };
 
@@ -1122,33 +1147,39 @@ class CCMSNW extends CCMBase {
         else {
             this.updateOfListCommands = true;
         }
-        // if (this.loadDS) {
-        //     let attributes = {
-        //         "a_index": {
-        //             index: 0,
-        //             componentsPerAttribute: 1,
-        //             vertexBuffer: this.framelines,//normal array
-        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
-        //         },
-        //     };
-        //     let uniformMap = {
-        //         // u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
-        //         u_DS: () => {
-        //             // console.log(this.DS[this.getCurrentLevelByIndex()])
-        //             return this.DS[this.getCurrentLevelByIndex()];
-        //         },
-        //         u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
-        //         u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
-        //         u_dem_enable: () => { return this.getEnableDEM() },
-        //         u_dem_base: () => { return this.getBaseZ() },
+        if (this.loadDS && this.setting.framlines === true) {
+            let attributes = {
+                "a_index": {
+                    index: 0,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: this.framelines.index,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+                "a_tp": {
+                    index: 1,
+                    componentsPerAttribute: 1,
+                    vertexBuffer: this.framelines.tp,//normal array
+                    componentDatatype: Cesium.ComponentDatatype.FLOAT
+                },
+            };
+            let uniformMap = {
+                // u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+                u_DS: () => {
+                    // console.log(this.DS[this.getCurrentLevelByIndex()])
+                    return this.DS[this.getCurrentLevelByIndex()];
+                },
+                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+                u_dem_enable: () => { return this.getEnableDEM() },
+                u_dem_base: () => { return this.getBaseZ() },
 
-        //         u_z_enable_dem_rate: () => { return this.getRateDEM() },
-        //         u_z_baseZ: () => { return this.getBaseZ() },
-        //         u_z_rateZbed: () => { return this.getRateZbed() },
-        //     };
-        //     nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributes, uniformMap, { vertexShader: cmflVS, fragmentShader: framelineFS }, Cesium.PrimitiveType.LINES));
+                u_z_enable_dem_rate: () => { return this.getRateDEM() },
+                u_z_baseZ: () => { return this.getBaseZ() },
+                u_z_rateZbed: () => { return this.getRateZbed() },
+            };
+            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributes, uniformMap, { vertexShader: cmflVS, fragmentShader: framelineFS }, Cesium.PrimitiveType.LINES));
 
-        // }
+        }
         return nc;
 
     }
@@ -1763,6 +1794,7 @@ class CCMSNW extends CCMBase {
     checkWindMapSize() {
         let ds = this.oneJSON.dem;
         let rate = 1.0;
+        let rateScale = 0.5;
         let mm = this.setting.dynWindMapMM;
         let rect = this.getViewExtend();
         let min = Cesium.Cartesian3.fromDegrees(rect.minx, rect.miny);
@@ -1786,16 +1818,33 @@ class CCMSNW extends CCMBase {
         if (mm.start.x === false) {
             doit = true;
         }
-        else if ((new_mm.min.x < mm.start.x && mm.start.x > 0) || (new_mm.min.y < mm.start.y && mm.start.y > 0)
-            || (new_mm.max.x > mm.end.x && mm.end.x < ds.cols) || (new_mm.max.y > mm.end.y && mm.end.y < ds.rows)
-            || (new_mm.max.x < mm.end.x && mm.end.x == ds.cols) || (new_mm.max.y < mm.end.y && mm.end.y == ds.rows)
-            || (mm.end.x - new_mm.max.x > mm.range * rate) || (mm.end.y - new_mm.max.y > mm.range * rate)
-            || (new_mm.min.x - mm.start.x > mm.range * rate) || (new_mm.min.y - mm.start.x > mm.range * rate)
+        else if ((
+            (new_mm.min.x < mm.start.x && mm.start.x > 0) || (new_mm.min.y < mm.start.y && mm.start.y > 0)//left xy > 0
+            || (new_mm.max.x > mm.end.x && mm.end.x < ds.cols) || (new_mm.max.y > mm.end.y && mm.end.y < ds.rows)//right xy >max ,并且未大于 行列数
+            // || (new_mm.max.x < mm.end.x && mm.end.x == ds.cols) || (new_mm.max.y < mm.end.y && mm.end.y == ds.rows)// right xy > 行数或列数
+            || (mm.end.x - new_mm.max.x > mm.range * rate) || (mm.end.y - new_mm.max.y > mm.range * rate)//max over range
+            || (new_mm.min.x - mm.start.x > mm.range * rate) || (new_mm.min.y - mm.start.y > mm.range * rate)//min over range 
+
+            // || (mm.end.x - new_mm.max.x < rateScale * mm.range * rate) || (mm.end.y - new_mm.max.y < rateScale * mm.range * rate)
+            // || (new_mm.min.x - mm.start.x < rateScale * mm.range * rate) || (new_mm.min.y - mm.start.x < rateScale * mm.range * rate)
+        ) && ((new_mm.min.x != parseInt(mm.start.x + mm.range * rate)) || (new_mm.min.y != parseInt(mm.start.x + mm.range * rate)))
         ) {
             doit = true;
         }
         if (doit) {
             // console.log(mm, new_mm);
+            // console.log("&& 1", (new_mm.min.x != parseInt(mm.start.x - mm.range * rate)));
+            // console.log("&& 2", (new_mm.min.y != parseInt(mm.start.x - mm.range * rate)));
+            // console.log("|| 1", (new_mm.min.x < mm.start.x && mm.start.x > 0));
+            // console.log("|| 2", (new_mm.min.y < mm.start.y && mm.start.y > 0));
+            // console.log("|| 3", (new_mm.max.x > mm.end.x && mm.end.x < ds.cols));
+            // console.log("|| 4", (new_mm.max.y > mm.end.y && mm.end.y < ds.rows));
+            // console.log("|| 5", (mm.end.x - new_mm.max.x > mm.range * rate));
+            // console.log("|| 6", (mm.end.y - new_mm.max.y > mm.range * rate));
+            // console.log("|| 7", (new_mm.min.x - mm.start.x > mm.range * rate));
+            // console.log("|| 8",  (new_mm.min.y - mm.start.y > mm.range * rate));
+
+
             if (orgin_min.x <= 0) {
                 mm.start.x = 0;
             }
@@ -1845,9 +1894,27 @@ class CCMSNW extends CCMBase {
                     mm.end.y += mm.range;
                 }
             }
-            this.renewNetworkDS(mm);
-            this.renewFlag = true;
-            this.updateOfListCommands = true;
+            let cols = this.oneJSON.dem.cols;
+            let rows = this.oneJSON.dem.rows;
+            let mmx = mm.end.x - mm.start.x;
+            let mmy = mm.end.y - mm.start.y;
+            if (mmx > cols * 0.5 || mmy > rows * 0.5) {
+
+                if (this.WMs_origin.index.length == this.WMs.index.length) {
+                    this.updateOfListCommands = false;
+                }
+                else {
+                    this.WMs = this.WMs_origin;
+                    this.updateOfListCommands = true;
+                }
+
+                return;
+            } else {
+                this.renewNetworkDS(mm);
+                this.renewFlag = true;
+                this.updateOfListCommands = true;
+            }
+
 
         }
 
@@ -1855,6 +1922,12 @@ class CCMSNW extends CCMBase {
     renewNetworkDS(mm) {
         let cols = this.oneJSON.dem.cols;
         let rows = this.oneJSON.dem.rows;
+        // let mmx = mm.end.x - mm.start.x;
+        // let mmy = mm.end.y - mm.start.y;
+        // if (mmx > cols * 0.5 || mmy > rows * 0.5) {
+        //     this.WMs = this.WMs_origin;
+        //     return;
+        // }
         this.WMs =
         {
             index: [],

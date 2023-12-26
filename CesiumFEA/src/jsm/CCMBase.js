@@ -122,6 +122,7 @@ class CCMBase {
  * @param setting 传入的设置
  */
     constructor(modelMatrix, oneJSON, setting = false) {
+        this.inputSetting = setting;
         this.timer = {
             timer: false,
             timerIndex: 0,//for timer ++
@@ -186,6 +187,10 @@ class CCMBase {
 
                 /** 点的尺寸，WEBGL中的尺寸 */
                 pointSize: 1,
+                /** uv max and min scale */
+                scaleOfUV: 1,
+                /** filter uv =0 */
+                filterUVofZeroOfGB: false,
 
                 /**
                  * UV的 过滤条件，
@@ -197,6 +202,7 @@ class CCMBase {
             cmType: "cm",//"w2",//cm,cmBLue,wind
             cmTarget: "zbed",//"zbed",
             visible: true,
+            framlines: false,
         }
         for (let i in setting) {
             if (typeof setting[i] == "object" && typeof this.setting[i] != "undefined") {
@@ -659,7 +665,7 @@ class CCMBase {
                 uniformMap: uniformMap,
                 renderState: renderState,
                 framebuffer: fbo,
-                pass:pass,
+                pass: pass,
                 // pass: fbo == undefined ? Cesium.Pass.TRANSLUCENT : Cesium.Pass.OPAQUE,//old,可以工作
                 // pass: fbo == "undefined" || fbo == undefined ? Cesium.Pass.OPAQUE : Cesium.Pass.TRANSLUCENT,//wind map error ，颜色不对了
                 // pass: Cesium.Pass.OPAQUE,//不透明

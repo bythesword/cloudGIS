@@ -18,11 +18,11 @@
                 0.0,
                 0.01
             ],
-            "filter": true
+            "filter": false
         },
         "zbed": {
             "global_MM": true,
-            "max": 47.39220019391114,
+            "max": 344.45159889518396,
             "min": 0.0,
             "filterKind": 1,
             "filterValue": [
@@ -33,8 +33,8 @@
         },
         "U": {
             "global_MM": true,
-            "max": 2.160786240964269,
-            "min": -1.0117568125981733,
+            "max": 2.1788326709035064,
+            "min": -0.9216353016329683,
             "filterKind": 1,
             "filterValue": [
                 0.0,
@@ -44,8 +44,8 @@
         },
         "V": {
             "global_MM": true,
-            "max": 2.325108169896276,
-            "min": -1.7719085770719578,
+            "max": 2.668559864953267,
+            "min": -1.6041612940586352,
             "filterKind": 1,
             "filterValue": [
                 0.0,
@@ -56,10 +56,10 @@
     },
     "data": [
         {
-            "png": "/QH/RGBA.png",
+            "png": "/public/QH/qh-nozeroRGBA.png",
             "zbed": {
                 "global_MM": true,
-                "max": 47.39220019391114,
+                "max": 344.45159889518396,
                 "min": 0.0,
                 "filterKind": 1,
                 "filterValue": [
@@ -70,8 +70,8 @@
             },
             "U": {
                 "global_MM": true,
-                "max": 2.160786240964269,
-                "min": -1.0117568125981733,
+                "max": 2.1788326709035064,
+                "min": -0.9216353016329683,
                 "filterKind": 1,
                 "filterValue": [
                     0.0,
@@ -81,8 +81,8 @@
             },
             "V": {
                 "global_MM": true,
-                "max": 2.325108169896276,
-                "min": -1.7719085770719578,
+                "max": 2.668559864953267,
+                "min": -1.6041612940586352,
                 "filterKind": 1,
                 "filterValue": [
                     0.0,
