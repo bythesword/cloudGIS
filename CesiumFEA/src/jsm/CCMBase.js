@@ -136,6 +136,10 @@ class CCMBase {
                 circleCounts: 0,
             }
         };
+        this.RofBoundingSphere = 0.1;
+        if (typeof setting.RofBoundingSphere != "undefined") {
+            this.RofBoundingSphere = setting.RofBoundingSphere;
+        }
         /** setting  */
         this.setting = {
             z: {
@@ -495,6 +499,12 @@ class CCMBase {
     * @param {FrameState} frameState
     */
     update(frameState) {
+        if (typeof this._pickId == "undefined") {
+            this._pickId = frameState.context.createPickId({
+                primitive: this,
+                id: "ccm_" + new Date(),
+            });
+        }
         if (typeof this.frameState == "undefined")
             this.frameState = frameState;
         if (this.visible)
@@ -658,7 +668,13 @@ class CCMBase {
                 pass = Cesium.Pass.OPAQUE;
             }
 
+            let coordinate = new Cesium.Cartesian3();
+            if (typeof this.setting.coordinate != "undefined") {
+                coordinate=   Cesium.Cartesian3.fromDegrees(this.setting.coordinate[0], this.setting.coordinate[1], this.setting.coordinate[2]);
+            }
             return new Cesium.DrawCommand({
+                // boundingVolume: new Cesium.BoundingSphere(),
+                // boundingVolume: new Cesium.BoundingSphere(coordinate, 0),
                 modelMatrix: modelMatrix,
                 vertexArray: vertexArray,
                 shaderProgram: program,

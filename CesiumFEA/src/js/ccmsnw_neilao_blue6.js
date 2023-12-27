@@ -7,7 +7,7 @@ import { CCMSNW } from "../jsm/CCMSNW"
 
 import { TFL } from "../jsm/TFL";
 // import * as rgbaJSON from "../../public/qinghe/rgba.json";
-import * as rgbaJSON from "../../public/QH/rgba.json";
+import * as rgbaJSON from "../../public/QH/rgba_realZero.json";
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlZjNiZTgxOS0xZDYwLTQzNzctYWRkOS00ZjJkZDI2YjA5MGMiLCJpZCI6ODMyOTksImlhdCI6MTY0NTY3MTU4NH0.2bu4bjqgk1yx5JMdC1iU8j65IlMztD4KI11scmH_sHQ';
 

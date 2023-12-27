@@ -7,7 +7,7 @@ import { CCMSNW } from "../jsm/CCMSNW"
 
 import { TFL } from "../jsm/TFL";
 // import * as rgbaJSON from "../../public/qinghe/rgba.json";
-import * as rgbaJSON from "../../public/QH/rgba.json";
+import * as rgbaJSON from "../../public/QH/rgba_721133.json";
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlZjNiZTgxOS0xZDYwLTQzNzctYWRkOS00ZjJkZDI2YjA5MGMiLCJpZCI6ODMyOTksImlhdCI6MTY0NTY3MTU4NH0.2bu4bjqgk1yx5JMdC1iU8j65IlMztD4KI11scmH_sHQ';
 
@@ -83,6 +83,8 @@ var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin)
 
 //目前使用单个网格，测试
 let setting = {
+    coordinate: [116.207069, 39.952786, 0],
+    RofBoundingSphere: 1,
     z: {
         // RateDEM: 10,
         dem: false,
@@ -114,7 +116,7 @@ let setting = {
     cmType: "cmWater",//cmWater,cmWaterBlue12,cmWaterBlue6ABS1,cmWaterC12,cm,cmBlue,cmBlue6
     cm: "zbed",
     CMAA: true,
-    framlines: true,
+    // framlines: true,
 };
 let oneCCM = new CCMSNW(modelMatrix, rgbaJSON, setting);
 

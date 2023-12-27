@@ -52,6 +52,7 @@ var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin)
 //目前使用单个网格，测试
 
 let setting = {
+    coordinate: [116.207069, 39.952786, 5],
     z: {
         // RateDEM: 10,
         dem: false,

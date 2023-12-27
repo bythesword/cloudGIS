@@ -85,8 +85,20 @@ vec4 CMC(vec2 uv, vec3 CM) {
     float dv = 1.0 / step;
     float vv = v;
     vec4 fragColor = vec4(0);
-
-    if(vv <= 0.08333333333333333) {
+    if(vv < 0.0) {
+        fragColor = vec4(0.3);
+        discard;
+    } else if(vv == 0.0) {
+        if(u_enable_CMAA == true) {
+            if(v_dem == 0.0) {
+                discard;
+                gl_FragColor = vec4(0);
+            // return;
+            }
+        }
+        fragColor = vec4(0.5);
+        discard;
+    } else if(vv <= 0.08333333333333333) {
         fragColor = vec4(0.0, 0, 1.0, 1.0);
     } else if(vv > 0.08333333333333333 && vv <= 0.16666666666666666) {
         fragColor = vec4(0.0, 0.3607843137254902, 1.0, 1.0);
@@ -188,21 +200,24 @@ void main() {
     // // gl_FragColor = vec4(0, 0, 1, 1);
     // return;
 
-    int n = 12;
-    float w1 = (1.0 - v_uv.x);
-    float w2 = (v_uv.x - v_uv.y);
-    float w3 = v_uv.y;
+    // int n = 12;
+    // float w1 = (1.0 - v_uv.x);
+    // float w2 = (v_uv.x - v_uv.y);
+    // float w3 = v_uv.y;
 
     float cm1 = v_cm_zbed[0];
     float cm2 = v_cm_zbed[1];
     float cm3 = v_cm_zbed[2];
 
-    float v;
+    // float v;
 
+//使用数值做CM
     cm1 = v_cm_r_CMAA[0];
     cm2 = v_cm_r_CMAA[1];
     cm3 = v_cm_r_CMAA[2];
+//end
 
+//使用未补偿的算法的插值回来的数值
     // float cmP1 = mix(u_zbed_mm.x, u_zbed_mm.y, cm1);
     // float cmP2 = mix(u_zbed_mm.x, u_zbed_mm.y, cm2);
     // float cmP3 = mix(u_zbed_mm.x, u_zbed_mm.y, cm3);
@@ -210,9 +225,13 @@ void main() {
     // cm1 = cmP1;
     // cm2 = cmP2;
     // cm3 = cmP3;
+//end
 
-    // gl_FragColor = CMC6(v_uv, vec3(cm1, cm2, cm3));                      //有波纹 
+    //test only //有波纹
+    // gl_FragColor = CMC6(v_uv, vec3(cm1, cm2, cm3));                      
+    //end 
 
+//验证补偿数据使用    
     // float vm1 = v_cm_g_CMAA[0];
     // float vm2 = v_cm_g_CMAA[1];
     // float vm3 = v_cm_g_CMAA[2];
@@ -245,6 +264,8 @@ void main() {
 
     // return;
 
+//end
+    //以下为水效果代码
     float speed = u_water_wave_speed;//.80;
 
     // // Water Scale, scales the water, not the background.
@@ -267,6 +288,7 @@ void main() {
     vec4 highlights1 = texture(iChannel1, scaledUv.xy + iTime * speed / vec2(-10, 100));
     vec4 highlights2 = texture(iChannel1, scaledUv.xy + iTime * speed / vec2(10, 100));
 
+    //取CM色值
     vec4 background = CMC6(vec2(uv) + avg(water1) * 0.025, vec3(cm1, cm2, cm3));                      //有波纹 
 
     water1.rgb = vec3(avg(water1));
