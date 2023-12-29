@@ -33,12 +33,13 @@ import cmWaterC12FS from "./shaders/cmwater/cmWaterC12.fs.glsl?raw"
 import cmWaterBlue12ColorFS from "./shaders/cmwater/cmWaterBlue12.fs.glsl?raw"
 import cmWaterBlue6ColorFS from "./shaders/cmwater/cmWaterBlue6.fs.glsl?raw"
 import cmWaterBlue6ABS1FS from "./shaders/cmwater/cmWaterBlue6ABS1.fs.glsl?raw"
+import cmWaterBlue6ABS1NofixFS from "./shaders/cmwater/cmWaterBlue6ABS1_nofix.fs.glsl?raw"
 
 
 import CNAACPFS from './shaders/CMAA/cp.fs.glsl?raw';
-import CMAA1 from './shaders/CMAA/cmaa1.fs.glsl?raw';
+// import CMAA1 from './shaders/CMAA/cmaa1.fs.glsl?raw';
 import CMAA2 from './shaders/CMAA/cmaa2.fs.glsl?raw';
-import CMAA3 from './shaders/CMAA/cmaa3.fs.glsl?raw';
+// import CMAA3 from './shaders/CMAA/cmaa3.fs.glsl?raw';
 
 class CCMSNW extends CCMBase {
 
@@ -580,7 +581,7 @@ class CCMSNW extends CCMBase {
                 nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmFS }, Cesium.PrimitiveType.TRIANGLES));
             }
         }
-        else if (this.loadDS && (this.setting.cmType == "cmWater" || this.setting.cmType == "cmWaterBlue12" || this.setting.cmType == "cmWaterBlue6" || this.setting.cmType == "cmWaterBlue6ABS1") || this.setting.cmType == "cmWaterC12") {
+        else if (this.loadDS && (this.setting.cmType == "cmWater" || this.setting.cmType == "cmWaterBlue12" || this.setting.cmType == "cmWaterBlue6"|| this.setting.cmType == "cmWaterBlue6ABS1" || this.setting.cmType == "cmWaterBlue6ABS1Nofix" || this.setting.cmType == "cmWaterC12"  ) ) {
             let attributesUVS = {
                 "a_index": {
                     index: 0,
@@ -700,6 +701,9 @@ class CCMSNW extends CCMBase {
             };
             if (this.setting.cmType == "cmWaterBlue6ABS1") {
                 nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmWaterBlue6ABS1FS }, Cesium.PrimitiveType.TRIANGLES));
+            }  
+            else if (this.setting.cmType == "cmWaterBlue6ABS1Nofix") {
+                nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmWaterBlue6ABS1NofixFS }, Cesium.PrimitiveType.TRIANGLES));
             }
             else if (this.setting.cmType == "cmWaterBlue6") {
                 nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmWaterBlue6ColorFS }, Cesium.PrimitiveType.TRIANGLES));
