@@ -1,23 +1,27 @@
 /** CM的类型 
- * 
+ * 这个比较多，
+ * 目前只采用:
+ *  "wind":实现风场图，
+ *  "cmWaterBlue6ABS1FS":云图与水波混合
+ * 其他后期再具体写功能
 */
-export enum CMType { "cm", "cmBlue", "wind", "arrow", "water1", "water2", "water3", "cmWaterBlue12","cmWaterBlue6","cmWater" }
+export enum CMType { "cm", "cmBlue", "wind", "arrow", "water1", "water2", "water3", "cmWaterBlue12", "cmWaterBlue6", "cmWater" ,"cmWaterBlue6ABS1FS"}
 /**
  * 初始化输入的参数 CMSetting
  */
 export declare type CMSetting = {
    /**关于Z的设置 */
    z: {
-      /** 是否使用 dem，默认：true */
+      /** 是否使用 dem，默认：false*/
       dem: boolean,
 
-      /** 是否使用zbed 填平zbed面 */
+      /** 是否使用zbed 填平zbed面 ,默认：false*/
       zbed_up: boolean,//old is zbed_up
 
       /** 基础高度，默认：0 */
       base_z: number,
 
-      /**是否使用基础高度 */
+      /**是否使用基础高度,默认：false */
       base_z_enable: boolean,
 
       /** zbed 放大倍率，default：1  */
@@ -58,12 +62,31 @@ export declare type CMSetting = {
       /** 点的尺寸，WEBGL中的尺寸 */
       pointSize: number // 1,
 
+      /** uv max and min scale,默认：1 */
+      scaleOfUV: 1,
+      /** filter uv =0,作废 */
+      filterUVofZeroOfGB: false,
+
+      /**
+       * cesium 的viewer
+       */
+      viewer: any,
       /**
        * UV的 过滤条件，
        * ture ：是否同时过滤UV=0，即 U和V都为0，是过滤
        * false，只有UV一个为0，即过滤掉
        *  */
-      UV_and_or: boolean//true,//and ==  true ,or =false
+      UV_and_or: boolean,//true,//and ==  true ,or =false
+
+      /**
+       * 动态网格的超出屏幕的网格梳理，默认：10，
+       * 建议采用默认值
+       * 预计后期会作废，将采用更高效的动态裁剪
+       */
+      dynWindMapMM: {
+         range: 10
+      },
+
    },
    /**
     * cm water 参数
@@ -73,6 +96,7 @@ export declare type CMSetting = {
       scale: number,
       opacity: number,
    },
+
    /** 
     * CM类型 
     * 参考 CMType
@@ -80,6 +104,7 @@ export declare type CMSetting = {
    cmType: string// "cm",//"w2",//cm,cmBLue,wind
 
    /**
+    * 作废20240111
     * 当cmType=cm|cmBlue时，target的对象，目前来看有zbed，u，v，uvM
     * u，v，uvM 这三个在GPU中，需要有时间实现，目前未实现
     */
@@ -104,6 +129,10 @@ export declare type CMTimer = {
       circleCounts: number //0,
    }
 };
+/**
+ * 基础类 CCM
+ * 实现了单个类的cesium的primitive的实现，其中包括全部流场update，texture等
+ */
 export declare class CCMBase {
 
    /**
@@ -199,6 +228,10 @@ export declare class CCMBase {
 }
 
 
+/**
+ * 从CCMBase扩展而来
+ * CCMSNW针对有序网进行定制
+ */
 export declare class CCMSNW extends CCMBase {
    /**
 * 设置更新command，数据变更
@@ -409,22 +442,22 @@ export declare class CCMSNW extends CCMBase {
 
 // /**
 //  * 创建纹理 从图像
-//  * @param {*} context 
+//  * @param {*} context
 //  * @param  Image: new (width?: number | undefined, height?: number | undefined) => HTMLImageElement img new Image()
-//  * @returns 
+//  * @returns
 //  */
 // export declare function createTextureFromImage(context: any, img: any): any
 
 // /**
 //  * 创建渲染通道
-//  * @param {*} frameState 
-//  * @param  any\[] modelMatrix 
-//  * @param {*} attributes 
-//  * @param {*} uniform 
-//  * @param \{vertexShader: string, fragmentShader: sting } material 
-//  * @param {*} type 
-//  * @param  any\[] Channal 
-//  * @param  \any | undefined  fbo 
+//  * @param {*} frameState
+//  * @param  any\[] modelMatrix
+//  * @param {*} attributes
+//  * @param {*} uniform
+//  * @param \{vertexShader: string, fragmentShader: sting } material
+//  * @param {*} type
+//  * @param  any\[] Channal
+//  * @param  \any | undefined  fbo
 //  * @returns Cesium.DrawCommand
 //  */
 
@@ -444,7 +477,7 @@ export declare class CCMSNW extends CCMBase {
 //  * @param any uniform : {}  ,uniform 参数
 //  * @param string fs :fs的字符串
 //  * @param any outputTexture :通过this.createTexture 创建的纹理
-//  * @returns 
+//  * @returns
 //  */
 // export declare function createCommandOfCompute(uniform: any, fs: string, outputTexture: any): any
 
@@ -452,35 +485,35 @@ export declare class CCMSNW extends CCMBase {
 
 // /**
 //  * 创建FBO从texture，深度缓冲是单独创建的（待查）
-//  * @param any context 
+//  * @param any context
 //  * @param any  Color  已有的纹理
-//  * @returns 
+//  * @returns
 //  */
 // export declare function createFramebufferFromTexture(context: any, Color: any): any
 
 // /**
 //  * 创建FBO，空的FBO
-//  * @param any context 
-//  * @returns any 
+//  * @param any context
+//  * @returns any
 //  */
 // export declare function createFramebuffer(context: any): any
 
 
 // /**
 //  * 创建VAO
-//  * @param any context 
-//  * @param \ number[] typedArray 
-//  * @returns 
+//  * @param any context
+//  * @param \ number[] typedArray
+//  * @returns
 //  */
 // export function createVAO(context: any, typedArray: number[]): any
 
 
 // /**
 //  * 创建cesium 纹理,从数据
-//  * 
-//  * 
+//  *
+//  *
 //  * @param {*} options ：例子
-//  * 
+//  *
 //  * const colorTextureOptions = {
 //  *       context: context,
 //  *       width: particleRes,
@@ -493,11 +526,11 @@ export declare class CCMSNW extends CCMBase {
 //  *           magnificationFilter: Cesium.TextureMagnificationFilter.NEAREST
 //  *       })
 //  *   };
-//  * 
-//  * 
+//  *
+//  *
 //  * @param Uint8Array typedArray : 例子 const particleState = new Uint8Array(particleRes * particleRes * 4);//1024*4,RGBA
-//  * 
-//  * 
+//  *
+//  *
 //  * @returns Cesium.Texture
 //  */
 // export function createTexture(options: any, typedArray: any): any
@@ -506,7 +539,7 @@ export declare class CCMSNW extends CCMBase {
 
 // /**
 //  * 创建渲染纹理2个color 和 depth，为创建FBO使用
-//  * @param {*} context 
+//  * @param {*} context
 //  * @returns {Color: {},Depth: {},}
 //  */
 // export function createRenderingTextures(context: any): any

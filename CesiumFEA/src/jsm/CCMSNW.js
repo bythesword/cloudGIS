@@ -1,45 +1,96 @@
 import * as Cesium from "cesium";
 import { CCMBase } from "./CCMBase";
 
-// import { drawVert, drawFrag, quadVert, opFrag, NupdateFrag, cpFS, cpTextureFS, uvsVS, uvsFS, cmFS, cmVS, cmAFS, cmAVS, cmW1, cmW2, cmW3, cmWS1, cmWS2, cmBlue6, cmBlue } from "./shaders/ccmIMG/material";
-import drawVert from './shaders/ccmIMG/draw.vert.glsl?raw';
-import drawFrag from './shaders/ccmIMG/draw.frag.glsl?raw';
-import quadVert from './shaders/ccmIMG/quad.vert.glsl?raw';
-import opFrag from './shaders/ccmIMG/op.frag.glsl?raw';
-import NupdateFrag from './shaders/ccmIMG/Nupdate.frag.glsl?raw';
-// import NupdateNLFrag from './shaders/ccmIMG/Nupdate.NL.frag.glsl?raw';
-import cpFS from './shaders/ccmIMG/cp.fs.glsl?raw';
-import cpTextureFS from './shaders/ccmIMG/cpTexture.fs.glsl?raw';//修改显示u_wind
-import uvsVS from './shaders/ccmIMG/uvs.vs.glsl?raw';
-import uvsFS from './shaders/ccmIMG/uvs.fs.glsl?raw';
-import cmFS from './shaders/ccmIMG/cm.fs.glsl?raw';
-import cmBlue6 from './shaders/ccmIMG/cmBlue6.fs.glsl?raw';
-import cmBlue from './shaders/ccmIMG/cmBlue.fs.glsl?raw';
-import cmVS from './shaders/ccmIMG/cm.vs.glsl?raw';
-import cmAFS from './shaders/ccmIMG/cmArrow.fs.glsl?raw';
-import cmAVS from './shaders/ccmIMG/cmArrow.vs.glsl?raw';
-import cmW1 from './shaders/ccmIMG/cmW1.fs.glsl?raw';
-import cmW2 from './shaders/ccmIMG/cmW2.fs.glsl?raw';
-import cmW3 from './shaders/ccmIMG/cmW3.fs.glsl?raw';
-import cmWS1 from './shaders/ccmIMG/wave2DDir.fs.glsl?raw';
-import cmWS2 from './shaders/ccmIMG/wave2DDirGabor.fs.glsl?raw';
+//// import { drawVert, drawFrag, quadVert, opFrag, NupdateFrag, cpFS, cpTextureFS, uvsVS, uvsFS, cmFS, cmVS, cmAFS, cmAVS, cmW1, cmW2, cmW3, cmWS1, cmWS2, cmBlue6, cmBlue } from "./shaders/ccmIMG/material";
+
+// import drawVert from './shaders/ccmIMG/draw.vert.glsl?raw';
+import { drawVert } from './shaders/ccmIMG/draw.vert.js';
+
+// import drawFrag from './shaders/ccmIMG/draw.frag.glsl?raw';
+import { drawFrag } from './shaders/ccmIMG/draw.frag.js';
+
+// import quadVert from './shaders/ccmIMG/quad.vert.glsl?raw';
+import { quadVert } from './shaders/ccmIMG/quad.vert.js';
+
+// import opFrag from './shaders/ccmIMG/op.frag.glsl?raw';
+import { opFrag } from './shaders/ccmIMG/op.frag.js';
 
 
-import cmflVS from './shaders/ccmIMG/cmfl.vs.glsl?raw';
-import framelineFS from './shaders/ccmIMG/frameline.fs.glsl?raw';
+// import NupdateFrag from './shaders/ccmIMG/Nupdate.frag.glsl?raw';
+import { NupdateFrag } from './shaders/ccmIMG/Nupdate.frag.js';
 
-// import { cmWaterC12FS, cmWaterBlue6ColorFS, cmWaterBlue12ColorFS, cmWaterBlue6ABS1FS } from "./shaders/cmwater/cmWater"
-import cmWaterC12FS from "./shaders/cmwater/cmWaterC12.fs.glsl?raw"
-import cmWaterBlue12ColorFS from "./shaders/cmwater/cmWaterBlue12.fs.glsl?raw"
-import cmWaterBlue6ColorFS from "./shaders/cmwater/cmWaterBlue6.fs.glsl?raw"
-import cmWaterBlue6ABS1FS from "./shaders/cmwater/cmWaterBlue6ABS1.fs.glsl?raw"
-import cmWaterBlue6ABS1NofixFS from "./shaders/cmwater/cmWaterBlue6ABS1_nofix.fs.glsl?raw"
+//// import NupdateNLFrag from './shaders/ccmIMG/Nupdate.NL.frag.glsl?raw';
+
+// import cpFS from './shaders/ccmIMG/cp.fs.glsl?raw';
+import { cpFS } from './shaders/ccmIMG/cp.fs.js';
 
 
-import CNAACPFS from './shaders/CMAA/cp.fs.glsl?raw';
-// import CMAA1 from './shaders/CMAA/cmaa1.fs.glsl?raw';
-import CMAA2 from './shaders/CMAA/cmaa2.fs.glsl?raw';
-// import CMAA3 from './shaders/CMAA/cmaa3.fs.glsl?raw';
+// import cpTextureFS from './shaders/ccmIMG/cpTexture.fs.glsl?raw';//修改显示u_wind
+import { cpTextureFS } from './shaders/ccmIMG/cpTexture.fs.js';//修改显示u_wind
+
+
+// import uvsVS from './shaders/ccmIMG/uvs.vs.glsl?raw';
+import { uvsVS } from './shaders/ccmIMG/uvs.vs.js';
+
+// import uvsFS from './shaders/ccmIMG/uvs.fs.glsl?raw';
+import { uvsFS } from './shaders/ccmIMG/uvs.fs.js';
+
+// import cmFS from './shaders/ccmIMG/cm.fs.glsl?raw';
+import { cmFS } from './shaders/ccmIMG/cm.fs.js';
+
+// import cmBlue6 from './shaders/ccmIMG/cmBlue6.fs.glsl?raw';
+import { cmBlue6 } from './shaders/ccmIMG/cmBlue6.fs.js';
+
+// import cmBlue from './shaders/ccmIMG/cmBlue.fs.glsl?raw';
+import { cmBlue } from './shaders/ccmIMG/cmBlue.fs.js';
+
+
+// import cmVS from './shaders/ccmIMG/cm.vs.glsl?raw';
+import { cmVS } from './shaders/ccmIMG/cm.vs.js';
+
+// import cmAFS from './shaders/ccmIMG/cmArrow.fs.glsl?raw';
+import { cmAFS } from './shaders/ccmIMG/cmArrow.fs.js';
+
+// import cmAVS from './shaders/ccmIMG/cmArrow.vs.glsl?raw';
+import { cmAVS } from './shaders/ccmIMG/cmArrow.vs.js';
+
+// import cmW1 from './shaders/ccmIMG/cmW1.fs.glsl?raw';
+// import cmW2 from './shaders/ccmIMG/cmW2.fs.glsl?raw';
+// import cmW3 from './shaders/ccmIMG/cmW3.fs.glsl?raw';
+// import cmWS1 from './shaders/ccmIMG/wave2DDir.fs.glsl?raw';
+// import cmWS2 from './shaders/ccmIMG/wave2DDirGabor.fs.glsl?raw';
+
+
+// import cmflVS from './shaders/ccmIMG/cmfl.vs.glsl?raw';
+import { cmflVS } from './shaders/ccmIMG/cmfl.vs.js';
+
+// import framelineFS from './shaders/ccmIMG/frameline.fs.glsl?raw';
+import { framelineFS } from './shaders/ccmIMG/frameline.fs.js';
+
+//// import { cmWaterC12FS, cmWaterBlue6ColorFS, cmWaterBlue12ColorFS, cmWaterBlue6ABS1FS } from "./shaders/cmwater/cmWater"
+
+// import cmWaterC12FS from "./shaders/cmwater/cmWaterC12.fs.glsl?raw"
+import { cmWaterC12FS } from "./shaders/cmwater/cmWaterC12.fs.js"
+
+// import cmWaterBlue12ColorFS from "./shaders/cmwater/cmWaterBlue12.fs.glsl?raw"
+import { cmWaterBlue12ColorFS } from "./shaders/cmwater/cmWaterBlue12.fs.js"
+
+// import cmWaterBlue6ColorFS from "./shaders/cmwater/cmWaterBlue6.fs.glsl?raw"
+import { cmWaterBlue6ColorFS } from "./shaders/cmwater/cmWaterBlue6.fs.js"
+
+// import cmWaterBlue6ABS1FS from "./shaders/cmwater/cmWaterBlue6ABS1.fs.glsl?raw"
+import { cmWaterBlue6ABS1FS } from "./shaders/cmwater/cmWaterBlue6ABS1.fs.js"
+
+// import cmWaterBlue6ABS1NofixFS from "./shaders/cmwater/cmWaterBlue6ABS1_nofix.fs.glsl?raw"
+import { cmWaterBlue6ABS1NofixFS } from "./shaders/cmwater/cmWaterBlue6ABS1_nofix.fs.js"
+
+
+// import CNAACPFS from './shaders/CMAA/cp.fs.glsl?raw';
+import { CNAACPFS } from './shaders/CMAA/cp.fs.js';
+//// import CMAA1 from './shaders/CMAA/cmaa1.fs.glsl?raw';
+// import CMAA2 from './shaders/CMAA/cmaa2.fs.glsl?raw';
+import { CMAA2 } from './shaders/CMAA/cmaa2.fs.js';
+//// import CMAA3 from './shaders/CMAA/cmaa3.fs.glsl?raw';
 
 class CCMSNW extends CCMBase {
 
@@ -204,10 +255,11 @@ class CCMSNW extends CCMBase {
                 }
             }
         } else if (this.setting.cmType == "wind" && (this.resizeFlag == true || this.renewFlag == true) && this.updateOfListCommands === true) {
-            this.FBO1.destroy();
-            this.FBO2.destroy();
+            if (this.FBO1) this.FBO1.destroy();
+            if (this.FBO2) this.FBO2.destroy();
             this.FBO1 = this.createFramebuffer(frameState.context);
             this.FBO2 = this.createFramebuffer(frameState.context);
+            this.setColorRamp(frameState.context, this.setting.wind.defaultRampColors);
             this.set_numParticles(frameState.context, this.setting.wind.counts);//替换gl 同 cesium
         }
 
@@ -581,7 +633,7 @@ class CCMSNW extends CCMBase {
                 nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmFS }, Cesium.PrimitiveType.TRIANGLES));
             }
         }
-        else if (this.loadDS && (this.setting.cmType == "cmWater" || this.setting.cmType == "cmWaterBlue12" || this.setting.cmType == "cmWaterBlue6"|| this.setting.cmType == "cmWaterBlue6ABS1" || this.setting.cmType == "cmWaterBlue6ABS1Nofix" || this.setting.cmType == "cmWaterC12"  ) ) {
+        else if (this.loadDS && (this.setting.cmType == "cmWater" || this.setting.cmType == "cmWaterBlue12" || this.setting.cmType == "cmWaterBlue6" || this.setting.cmType == "cmWaterBlue6ABS1" || this.setting.cmType == "cmWaterBlue6ABS1Nofix" || this.setting.cmType == "cmWaterC12")) {
             let attributesUVS = {
                 "a_index": {
                     index: 0,
@@ -701,7 +753,7 @@ class CCMSNW extends CCMBase {
             };
             if (this.setting.cmType == "cmWaterBlue6ABS1") {
                 nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmWaterBlue6ABS1FS }, Cesium.PrimitiveType.TRIANGLES));
-            }  
+            }
             else if (this.setting.cmType == "cmWaterBlue6ABS1Nofix") {
                 nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmVS, fragmentShader: cmWaterBlue6ABS1NofixFS }, Cesium.PrimitiveType.TRIANGLES));
             }
@@ -808,261 +860,261 @@ class CCMSNW extends CCMBase {
 
         }
 
-        else if (this.loadDS && (this.setting.cmType == "w1")) {
-            let attributesUVS = {
-                "a_index": {
-                    index: 0,
-                    componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.index,//normal array
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
-                // "a_uv": {
-                //     index: 1,
-                //     componentsPerAttribute: 2,
-                //     vertexBuffer: peroneJSON.uv,//normal array
-                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
-                // },
-                "a_tp": {
-                    index: 1,
-                    componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.tp,//normal array
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
-            };
-            let uniformMap = {
-                iTime: () => { this.iTime += 0.0051; return this.iTime },
+        // else if (this.loadDS && (this.setting.cmType == "w1")) {
+        //     let attributesUVS = {
+        //         "a_index": {
+        //             index: 0,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: peroneJSON.index,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //         // "a_uv": {
+        //         //     index: 1,
+        //         //     componentsPerAttribute: 2,
+        //         //     vertexBuffer: peroneJSON.uv,//normal array
+        //         //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         // },
+        //         "a_tp": {
+        //             index: 1,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: peroneJSON.tp,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //     };
+        //     let uniformMap = {
+        //         iTime: () => { this.iTime += 0.0051; return this.iTime },
 
-                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
-                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
-                u_dem_enable: () => { return this.getEnableDEM() },
-                u_dem_base: () => { return this.getBaseZ() },
+        //         u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+        //         u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+        //         u_dem_enable: () => { return this.getEnableDEM() },
+        //         u_dem_base: () => { return this.getBaseZ() },
 
-                u_z_enable_dem_rate: () => { return this.getRateDEM() },
-                u_z_baseZ: () => { return this.getBaseZ() },
-                u_z_rateZbed: () => { return this.getRateZbed() },
+        //         u_z_enable_dem_rate: () => { return this.getRateDEM() },
+        //         u_z_baseZ: () => { return this.getBaseZ() },
+        //         u_z_rateZbed: () => { return this.getRateZbed() },
 
-                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
-                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
-                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
-                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
-
-
-
-                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
-
-
-                u_UVs: () => { return false; },
-                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
-
-            };
-
-            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: uvsVS, fragmentShader: cmW1 }, Cesium.PrimitiveType.TRIANGLES));
-
-        }
-        else if (this.loadDS && (this.setting.cmType == "w2")) {
-            let attributesUVS = {
-                "a_index": {
-                    index: 0,
-                    componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.index,//normal array
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
-                // "a_uv": {
-                //     index: 1,
-                //     componentsPerAttribute: 2,
-                //     vertexBuffer: peroneJSON.uv,//normal array
-                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
-                // },
-                "a_tp": {
-                    index: 1,
-                    componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.tp,//normal array
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
-            };
-            let uniformMap = {
-                iTime: () => { this.iTime += 0.0051; return this.iTime },
-
-                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
-                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
-                u_dem_enable: () => { return this.getEnableDEM() },
-                u_dem_base: () => { return this.getBaseZ() },
-
-                u_z_enable_dem_rate: () => { return this.getRateDEM() },
-                u_z_baseZ: () => { return this.getBaseZ() },
-                u_z_rateZbed: () => { return this.getRateZbed() },
-
-                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
-                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
-                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
-                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+        //         u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+        //         u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+        //         u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+        //         u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
 
 
 
-                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+        //         u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
 
 
-                u_UVs: () => { return false; },
-                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+        //         u_UVs: () => { return false; },
+        //         u_CMType: () => { return 1; },//1=zbed,2=u,3=v
 
-            };
+        //     };
 
-            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: uvsVS, fragmentShader: cmW2 }, Cesium.PrimitiveType.TRIANGLES));
+        //     nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: uvsVS, fragmentShader: cmW1 }, Cesium.PrimitiveType.TRIANGLES));
 
-        }
-        else if (this.loadDS && (this.setting.cmType == "w3")) {
-            let attributesUVS = {
-                "a_index": {
-                    index: 0,
-                    componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.index,//normal array
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
-                // "a_uv": {
-                //     index: 1,
-                //     componentsPerAttribute: 2,
-                //     vertexBuffer: peroneJSON.uv,//normal array
-                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
-                // },
-                "a_tp": {
-                    index: 1,
-                    componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.tp,//normal array
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
-            };
-            let uniformMap = {
-                iTime: () => { this.iTime += 0.0051; return this.iTime },
+        // }
+        // else if (this.loadDS && (this.setting.cmType == "w2")) {
+        //     let attributesUVS = {
+        //         "a_index": {
+        //             index: 0,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: peroneJSON.index,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //         // "a_uv": {
+        //         //     index: 1,
+        //         //     componentsPerAttribute: 2,
+        //         //     vertexBuffer: peroneJSON.uv,//normal array
+        //         //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         // },
+        //         "a_tp": {
+        //             index: 1,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: peroneJSON.tp,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //     };
+        //     let uniformMap = {
+        //         iTime: () => { this.iTime += 0.0051; return this.iTime },
 
-                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
-                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
-                u_dem_enable: () => { return this.getEnableDEM() },
-                u_dem_base: () => { return this.getBaseZ() },
+        //         u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+        //         u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+        //         u_dem_enable: () => { return this.getEnableDEM() },
+        //         u_dem_base: () => { return this.getBaseZ() },
 
-                u_z_enable_dem_rate: () => { return this.getRateDEM() },
-                u_z_baseZ: () => { return this.getBaseZ() },
-                u_z_rateZbed: () => { return this.getRateZbed() },
+        //         u_z_enable_dem_rate: () => { return this.getRateDEM() },
+        //         u_z_baseZ: () => { return this.getBaseZ() },
+        //         u_z_rateZbed: () => { return this.getRateZbed() },
 
-                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
-                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
-                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
-                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
-
-
-
-                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
-
-
-                u_UVs: () => { return false; },
-                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
-
-            };
-
-            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: uvsVS, fragmentShader: cmW3 }, Cesium.PrimitiveType.TRIANGLES));
-
-        }
-        else if (this.loadDS && (this.setting.cmType == "ws1")) {
-            let attributesUVS = {
-                "a_index": {
-                    index: 0,
-                    componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.index,//normal array
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
-                // "a_uv": {
-                //     index: 1,
-                //     componentsPerAttribute: 2,
-                //     vertexBuffer: peroneJSON.uv,//normal array
-                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
-                // },
-                "a_tp": {
-                    index: 1,
-                    componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.tp,//normal array
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
-            };
-            let uniformMap = {
-                iTime: () => { this.iTime += 0.0051; return this.iTime },
-
-                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
-                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
-                u_dem_enable: () => { return this.getEnableDEM() },
-                u_dem_base: () => { return this.getBaseZ() },
-
-                u_z_enable_dem_rate: () => { return this.getRateDEM() },
-                u_z_baseZ: () => { return this.getBaseZ() },
-                u_z_rateZbed: () => { return this.getRateZbed() },
-
-                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
-                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
-                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
-                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+        //         u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+        //         u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+        //         u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+        //         u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
 
 
 
-                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+        //         u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
 
 
-                u_UVs: () => { return false; },
-                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+        //         u_UVs: () => { return false; },
+        //         u_CMType: () => { return 1; },//1=zbed,2=u,3=v
 
-            };
+        //     };
 
-            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmAVS, fragmentShader: cmWS1 }, Cesium.PrimitiveType.TRIANGLES));
+        //     nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: uvsVS, fragmentShader: cmW2 }, Cesium.PrimitiveType.TRIANGLES));
 
-        }
-        else if (this.loadDS && (this.setting.cmType == "ws2")) {
-            let attributesUVS = {
-                "a_index": {
-                    index: 0,
-                    componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.index,//normal array
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
-                // "a_uv": {
-                //     index: 1,
-                //     componentsPerAttribute: 2,
-                //     vertexBuffer: peroneJSON.uv,//normal array
-                //     componentDatatype: Cesium.ComponentDatatype.FLOAT
-                // },
-                "a_tp": {
-                    index: 1,
-                    componentsPerAttribute: 1,
-                    vertexBuffer: peroneJSON.tp,//normal array
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
-            };
-            let uniformMap = {
-                iTime: () => { this.iTime += 0.0051; return this.iTime },
+        // }
+        // else if (this.loadDS && (this.setting.cmType == "w3")) {
+        //     let attributesUVS = {
+        //         "a_index": {
+        //             index: 0,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: peroneJSON.index,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //         // "a_uv": {
+        //         //     index: 1,
+        //         //     componentsPerAttribute: 2,
+        //         //     vertexBuffer: peroneJSON.uv,//normal array
+        //         //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         // },
+        //         "a_tp": {
+        //             index: 1,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: peroneJSON.tp,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //     };
+        //     let uniformMap = {
+        //         iTime: () => { this.iTime += 0.0051; return this.iTime },
 
-                u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
-                u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
-                u_dem_enable: () => { return this.getEnableDEM() },
-                u_dem_base: () => { return this.getBaseZ() },
+        //         u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+        //         u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+        //         u_dem_enable: () => { return this.getEnableDEM() },
+        //         u_dem_base: () => { return this.getBaseZ() },
 
-                u_z_enable_dem_rate: () => { return this.getRateDEM() },
-                u_z_baseZ: () => { return this.getBaseZ() },
-                u_z_rateZbed: () => { return this.getRateZbed() },
+        //         u_z_enable_dem_rate: () => { return this.getRateDEM() },
+        //         u_z_baseZ: () => { return this.getBaseZ() },
+        //         u_z_rateZbed: () => { return this.getRateZbed() },
 
-                u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
-                u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
-                u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
-                u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
-
-
-
-                u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+        //         u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+        //         u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+        //         u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+        //         u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
 
 
-                u_UVs: () => { return false; },
-                u_CMType: () => { return 1; },//1=zbed,2=u,3=v
 
-            };
+        //         u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
 
-            nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmAVS, fragmentShader: cmWS2 }, Cesium.PrimitiveType.TRIANGLES));
 
-        }
+        //         u_UVs: () => { return false; },
+        //         u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+
+        //     };
+
+        //     nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: uvsVS, fragmentShader: cmW3 }, Cesium.PrimitiveType.TRIANGLES));
+
+        // }
+        // else if (this.loadDS && (this.setting.cmType == "ws1")) {
+        //     let attributesUVS = {
+        //         "a_index": {
+        //             index: 0,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: peroneJSON.index,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //         // "a_uv": {
+        //         //     index: 1,
+        //         //     componentsPerAttribute: 2,
+        //         //     vertexBuffer: peroneJSON.uv,//normal array
+        //         //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         // },
+        //         "a_tp": {
+        //             index: 1,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: peroneJSON.tp,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //     };
+        //     let uniformMap = {
+        //         iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+        //         u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+        //         u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+        //         u_dem_enable: () => { return this.getEnableDEM() },
+        //         u_dem_base: () => { return this.getBaseZ() },
+
+        //         u_z_enable_dem_rate: () => { return this.getRateDEM() },
+        //         u_z_baseZ: () => { return this.getBaseZ() },
+        //         u_z_rateZbed: () => { return this.getRateZbed() },
+
+        //         u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+        //         u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+        //         u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+        //         u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+
+
+        //         u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+
+
+        //         u_UVs: () => { return false; },
+        //         u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+
+        //     };
+
+        //     nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmAVS, fragmentShader: cmWS1 }, Cesium.PrimitiveType.TRIANGLES));
+
+        // }
+        // else if (this.loadDS && (this.setting.cmType == "ws2")) {
+        //     let attributesUVS = {
+        //         "a_index": {
+        //             index: 0,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: peroneJSON.index,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //         // "a_uv": {
+        //         //     index: 1,
+        //         //     componentsPerAttribute: 2,
+        //         //     vertexBuffer: peroneJSON.uv,//normal array
+        //         //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         // },
+        //         "a_tp": {
+        //             index: 1,
+        //             componentsPerAttribute: 1,
+        //             vertexBuffer: peroneJSON.tp,//normal array
+        //             componentDatatype: Cesium.ComponentDatatype.FLOAT
+        //         },
+        //     };
+        //     let uniformMap = {
+        //         iTime: () => { this.iTime += 0.0051; return this.iTime },
+
+        //         u_DS_XY: () => { return { x: this.oneJSON.dem.cols, y: this.oneJSON.dem.rows } },
+        //         u_DS_CellSize: () => { return this.oneJSON.dem.cellsize },
+        //         u_dem_enable: () => { return this.getEnableDEM() },
+        //         u_dem_base: () => { return this.getBaseZ() },
+
+        //         u_z_enable_dem_rate: () => { return this.getRateDEM() },
+        //         u_z_baseZ: () => { return this.getBaseZ() },
+        //         u_z_rateZbed: () => { return this.getRateZbed() },
+
+        //         u_U_mm: () => { return { x: this.oneJSON.dataContent.U.min, y: this.oneJSON.dataContent.U.max } },
+        //         u_V_mm: () => { return { x: this.oneJSON.dataContent.V.min, y: this.oneJSON.dataContent.V.max } },
+        //         u_dem_mm: () => { return { x: this.oneJSON.dataContent.DEM.min, y: this.oneJSON.dataContent.DEM.max } },
+        //         u_zbed_mm: () => { return { x: this.oneJSON.dataContent.zbed.min, y: this.oneJSON.dataContent.zbed.max } },
+
+
+
+        //         u_DS: () => { return this.DS[this.getCurrentLevelByIndex()]; },
+
+
+        //         u_UVs: () => { return false; },
+        //         u_CMType: () => { return 1; },//1=zbed,2=u,3=v
+
+        //     };
+
+        //     nc.push(this.createCommandOfChannel(frameState, modelMatrix, attributesUVS, uniformMap, { vertexShader: cmAVS, fragmentShader: cmWS2 }, Cesium.PrimitiveType.TRIANGLES));
+
+        // }
         else {
             this.updateOfListCommands = true;
         }

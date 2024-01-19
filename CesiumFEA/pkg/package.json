@@ -1,13 +1,13 @@
 {
   "name": "cesiumfea",
-  "version": "1.0.3",
-  "description": "更新了cmWater 系列的shader:cmBlue,cmBlue6",
+  "version": "1.1.0",
+  "description": "wind map",
   "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "buildMin": " rollup -c rollup.config.min.js",
+    "buildMin": " rollup -c rollup.config.js",
     "buildAll": "rollup -c rollup.config.js && rollup -c rollup.config.min.js",
     "build": "rollup -c rollup.config.min.js ",
     "buildWorker": "rollup -c rollup.config.worker.js "

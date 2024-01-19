@@ -3,36 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //CustomCommand
 
-/**
- * CustomPrimitive 的 option 类型 的attributes 类型 attribute 类型定义
- * 
- * 例子：
- *         "position": {
- * 
-            index: 0,
 
-            componentsPerAttribute: 3,
-
-            vertexBuffer: [
-
-                -100, -100, 0, // 1
-
-                100, -100, 0, // 2
-
-                100, 100, 0, // 4
-
-                -100, -100, 0, // 1
-
-                100, 100, 0,//4
-
-                -100, 100, 0, //3 
-
-            ],//normal array
-
-            componentDatatype: Cesium.ComponentDatatype.FLOAT
-            
-        }
- */
 export declare type CCoptionsAttributePerOne = {
     /** 从0开始 */
     index: number,
@@ -53,11 +24,26 @@ export declare type CCoptionsAttributes = {
      */
     [n in string]: CCoptionsAttributePerOne
 }
+        /**
+         * 0=不需要
+         * 1=未初始化
+         * 2=初始化中
+         * 3=完成初始化
+         */
+export enum initStatue {
+    donotNeed = 0,
+    noStrat = 1,
+    doing = 2,
+    finish = 3,
 
+}
 
 export declare type Status = {
+    /**是否显示 */
     show: boolean,
+    /** 初始化状态 */
     initStatus: number,
+    /**前置准备工作是否完成 */
     ready: number,
 }
 
@@ -68,12 +54,42 @@ export declare type CCoptions = {
     /**
      * 类的名称，debug区别那个类用，无特殊用途
      */
-    name?:string
+    name?: string
     /**画或计算 */
     commandType: "Draw" | "Compute"
 
-    /** modelMatrix */
+    /** modelMatrix ,经纬度的转换矩阵（局部->全局）*/
     modelMatrix?: any
+    /**
+     * CustomPrimitive 的 option 类型 的attributes 类型 attribute 类型定义
+     * 
+     * 例子：
+     *         "position": {
+     * 
+                index: 0,//必须
+    
+                componentsPerAttribute: 3,//每个点的数据位数
+    
+                vertexBuffer: [ //数组
+    
+                    -100, -100, 0, // 1
+    
+                    100, -100, 0, // 2
+    
+                    100, 100, 0, // 4
+    
+                    -100, -100, 0, // 1
+    
+                    100, 100, 0,//4
+    
+                    -100, 100, 0, //3 
+    
+                ],//normal array
+    
+                componentDatatype: Cesium.ComponentDatatype.FLOAT，//一般都是float
+                
+            }
+     */
     attributes: any // 对象{} ，add by tom attributes from  input ,postion ,uv ,normal ,cm ....
     /**作废 */
     geometry?: any
@@ -85,7 +101,14 @@ export declare type CCoptions = {
      */
     primitiveType: any
 
-    /**webGL 的uniform */
+    /**webGL 的uniform 
+     * 
+     * exp：
+     * 
+     * uniformMap: {
+        u_channel0: () => { return CMAA; },
+    },
+    */
     uniformMap?: any
 
     /** VS */
@@ -95,7 +118,7 @@ export declare type CCoptions = {
     fragmentShaderSource: string
 
     /**
-     * Draw 模式必须
+     * Draw 模式的状态
      * Util.createRawRenderState({
                     // undefined value means let Cesium deal with it
                     viewport: undefined,
@@ -135,12 +158,16 @@ export declare type CCoptions = {
      * boolean
      * 
      * 默认为 false
+     * 
+     * true：自动建立FBO，并输出到FBO
+     * 
+     * 其他command 通过  oneCommand1.getFBO() 获得this command的FBO
      */
     framebuffer?: boolean
 
     /**
-     * 计算必须：
-     * Util.createTexture()
+     * 计算Command必须有。
+     * 通过Util.createTexture()创建
      */
     outputTexture?: any
 
@@ -164,9 +191,14 @@ export declare type CCoptions = {
     preExecute?: any,
 
     /**
-     * 是否进行update的command输出，
-     * 使用匿名函数，返回本shader需要的前置shader的 initStatue
-     * 例子：
+     * 判断前置的其他command是否已经执行完成；
+     * 
+     *  1、是否进行update的command输出，
+     * 
+     *  2、使用匿名函数，返回本shader需要的前置shader的 initStatue
+     * 
+     *  3、例子：
+     * 
      *   ready: () => {
      *      return oneCommand1.initStatue;
      *   },
@@ -174,18 +206,34 @@ export declare type CCoptions = {
     ready?: any,
 
     /**
-     *  在update 之前的初始化工作，在update执行时执行，做准备工作
+     * 预初始化执行
      * 
+     * 1、在update 之前的初始化工作，在update执行时执行，做准备工作
      * 
-     * 例子：
+     * 2、如果是URL的image，需要await 。在本身类的执行是异步方式。
+     * 
+     * 例子：1
      * 
      * 
      *   preInit: (scope) => {
+     * 
             //grayNoise64x64.png
 
             console.log("pre init")
+
             //pebbles.png
 
+            }
+
+     * 例子：2
+
+        preInit: async (scope) => {
+
+                //png
+
+                scope.DS_textures[0]= await Util.createTextureFromUrl(scope.frameState.context,"/noise/grayNoise64x64.png");
+                
+                scope.DS_textures[1]= await Util.createTextureFromUrl(scope.frameState.context,"/noise/pebbles.png");
 
             }
      */
@@ -212,7 +260,10 @@ export declare class CustomPrimitive {
     /**cesium frameState */
     frameState: any
 
-
+    /**
+     * this.ready = options.ready || undefined;
+     */
+    ready: any
     /**
      * 
      * @param any options 
@@ -238,9 +289,9 @@ export declare class CustomPrimitive {
     getStatus(): Status
 
     /**
-     * 是否可以工作
+     * 类的前置工作是否已经完成
      * 
-     * 1、返回true，可以工作
+     * 1、无前置工作，返回true，可以工作
      * 
      * 2、执行option输入参数的ready,自行判断
      * 
@@ -250,7 +301,13 @@ export declare class CustomPrimitive {
               return oneCommand1.initStatue == initFinished ? true : false;
             },
      */
-    getReady():boolean|any
+    getReady(): boolean | any
+
+    /**
+     * 类的状态，返回一个Status
+     *  
+     */
+    getStatus(): Status
 }
 
 
@@ -303,7 +360,7 @@ export declare function createTexture(options: any, typedArray: any): any
  * @param {*} index     ：number ,第几帧数据
  * @param {*} first ：是否为第一次加载，默认：false（不是）
  */
-export async function createTextureNearestFromUrl(context, url):any
+export async function createTextureNearestFromUrl(context, url): any
 
 /**
  * 加载纹理 非NEAREST
@@ -312,7 +369,7 @@ export async function createTextureNearestFromUrl(context, url):any
  * @param {*} index     ：number ,第几帧数据
  * @param {*} first ：是否为第一次加载，默认：false（不是）
  */
-export async function createTextureFromUrl(context, url, samplerFlag = false, repeat = true) :any
+export async function createTextureFromUrl(context, url, samplerFlag = false, repeat = true): any
 
 /**
  * 创建FBO，空的FBO
@@ -329,14 +386,14 @@ export declare function createFramebuffer(context: any, colorTexture: any, depth
  * @param {*} context 
  * @returns 
  */
-export function createFramebufferDefault(context, w = false, h = false):any
+export function createFramebufferDefault(context, w = false, h = false): any
 
 /**
  * 创建渲染纹理2个color 和 depth，为创建FBO使用
  * @param {*} context 
  * @returns {Color: {},Depth: {},}
  */
-export function createRenderingTextures(context, w = false, h = false):any
+export function createRenderingTextures(context, w = false, h = false): any
 
 
 /**
@@ -395,111 +452,3 @@ export declare function viewRectangleToLonLatRange(viewRectangle: any): any
 
 
 
-
-
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// // cesium ext from cesiumFEA
-
-// /**
-//  * 创建纹理 从图像
-//  * @param {*} context
-//  * @param  Image: new (width?: number | undefined, height?: number | undefined) => HTMLImageElement img new Image()
-//  * @returns
-//  */
-// export declare function createTextureFromImage(context: any, img: any): any
-
-// /**
-//  * 创建渲染通道
-//  * @param {*} frameState
-//  * @param  any\[] modelMatrix
-//  * @param {*} attributes
-//  * @param {*} uniform
-//  * @param \{vertexShader: string, fragmentShader: sting } material
-//  * @param {*} type
-//  * @param  any\[] Channal
-//  * @param  \any | undefined  fbo
-//  * @returns Cesium.DrawCommand
-//  */
-
-// export declare function createCommandOfChannel(
-//     frameState: any,
-//     modelMatrix: any[],
-//     attributes: any,
-//     uniform: any,
-//     material: { vertexShader: string, fragmentShader: sting },
-//     type: any,
-//     Channal = any[],
-//     fbo: any | undefined): any
-
-
-// /**
-//  * 计算shader
-//  * @param any uniform : {}  ,uniform 参数
-//  * @param string fs :fs的字符串
-//  * @param any outputTexture :通过this.createTexture 创建的纹理
-//  * @returns
-//  */
-// export declare function createCommandOfCompute(uniform: any, fs: string, outputTexture: any): any
-
-
-
-// /**
-//  * 创建FBO从texture，深度缓冲是单独创建的（待查）
-//  * @param any context
-//  * @param any  Color  已有的纹理
-//  * @returns
-//  */
-// export declare function createFramebufferFromTexture(context: any, Color: any): any
-
-// /**
-//  * 创建FBO，空的FBO
-//  * @param any context
-//  * @returns any
-//  */
-// export declare function createFramebuffer(context: any): any
-
-
-// /**
-//  * 创建VAO
-//  * @param any context
-//  * @param \ number[] typedArray
-//  * @returns
-//  */
-// export function createVAO(context: any, typedArray: number[]): any
-
-
-// /**
-//  * 创建cesium 纹理,从数据
-//  *
-//  *
-//  * @param {*} options ：例子
-//  *
-//  * const colorTextureOptions = {
-//  *       context: context,
-//  *       width: particleRes,
-//  *       height: particleRes,
-//  *       pixelFormat: Cesium.PixelFormat.RGBA,
-//  *       pixelDatatype: Cesium.PixelDatatype.UNSIGNED_BYTE            ,
-//  *       sampler: new Cesium.Sampler({
-//  *           // the values of texture will not be interpolated
-//  *           minificationFilter: Cesium.TextureMinificationFilter.NEAREST,
-//  *           magnificationFilter: Cesium.TextureMagnificationFilter.NEAREST
-//  *       })
-//  *   };
-//  *
-//  *
-//  * @param Uint8Array typedArray : 例子 const particleState = new Uint8Array(particleRes * particleRes * 4);//1024*4,RGBA
-//  *
-//  *
-//  * @returns Cesium.Texture
-//  */
-// export function createTexture(options: any, typedArray: any): any
-
-
-
-// /**
-//  * 创建渲染纹理2个color 和 depth，为创建FBO使用
-//  * @param {*} context
-//  * @returns {Color: {},Depth: {},}
-//  */
-// export function createRenderingTextures(context: any): any

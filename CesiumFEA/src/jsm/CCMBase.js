@@ -144,16 +144,16 @@ class CCMBase {
         this.setting = {
             z: {
                 /** 是否使用 dem，默认：true */
-                dem: true,
+                dem: false,
 
                 /** 是否使用zbed 填平zbed面 */
-                zbed_up: true,//old is zbed_up
+                zbed_up: false,//old is zbed_up
 
                 /** 基础高度，默认：0 */
                 base_z: 0,
 
                 /**是否使用基础高度 */
-                base_z_enable: true,
+                base_z_enable: false,
 
                 /** zbed 放大倍率，default：1  */
                 RateZbed: 1,
@@ -369,7 +369,9 @@ class CCMBase {
     getCurrentLevelByIndex() {
         return this.timer.currentLevel;
     }
-    /** 设置时间帧 */
+    /** 设置时间帧 
+     * 从0开始
+    */
     setCurrentLevelByIndex(lll = 0) {
         this.timer.currentLevel = lll;
         this.updateCM(lll);

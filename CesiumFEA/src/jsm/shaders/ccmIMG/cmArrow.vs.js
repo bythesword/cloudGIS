@@ -1,4 +1,4 @@
-attribute float a_index;
+let cmAVS = `attribute float a_index;
 attribute float a_tp;
 // attribute vec2 a_uv;
 
@@ -90,3 +90,5 @@ void main() {
     // gl_Position = position;//vec4(1);
 
 }
+`
+export { cmAVS }
