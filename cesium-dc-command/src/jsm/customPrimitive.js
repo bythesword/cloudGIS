@@ -44,6 +44,10 @@ export class CustomPrimitive {
 
         this.DS_textures = {};//纹理集合
         this.DS = {};//数据集合存放地
+        this.pass = false;
+        if (!Cesium.defined(options.pass)) {
+            this.pass = options.pass;
+        }
         ///////////////////////////////////////////////////////////////////
         // about init
 
@@ -186,7 +190,7 @@ export class CustomPrimitive {
                 this.uniformMap['iTime'] = () => {
                     // this.iTime += 0.0051; return this.iTime
                     let iTime = (new Date().getTime() - this.timestamp) / 1000.0;
-                    // console.log(iTime);
+                     console.log(iTime);
                     return iTime;
 
                 };
@@ -218,7 +222,8 @@ export class CustomPrimitive {
                     shaderProgram: shaderProgram,
                     framebuffer: this.framebuffer,
                     renderState: renderState,
-                    pass: Cesium.Pass.OPAQUE
+                    pass: this.pass || Cesium.Pass.OPAQUE,
+               
                 });
             }
             case 'Compute': {
@@ -247,7 +252,7 @@ export class CustomPrimitive {
 
     update(frameState) {
         this.frameState = frameState;
-        if (!this.show()) {
+        if (!this.getShow()) {
             return;
         }
 
@@ -289,8 +294,11 @@ export class CustomPrimitive {
     setEnable(enable = true) {
         this.enable = enable;
     }
-    show() {
+    getShow() {
         return this.enable;
+    }
+    show(enable = true) {
+        this.enable = enable;
     }
     getReady() {
         if (typeof this.ready == "undefined" || this.ready == undefined || this.ready == 0) {
@@ -302,7 +310,7 @@ export class CustomPrimitive {
     }
     getStatus() {
         return {
-            show: this.show(),
+            show: this.getShow(),
             initStatue: this.initStatue,
             ready: this.getReady(),
         }

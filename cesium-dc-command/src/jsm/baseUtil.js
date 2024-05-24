@@ -87,8 +87,8 @@ export function createTexture(options, typedArray) {
  * 加载纹理 非NEAREST
  * @param {*} context :any,cesium 上下文
  * @param {*} url   ：image
- * @param {*} index     ：number ,第几帧数据
- * @param {*} first ：是否为第一次加载，默认：false（不是）
+ * @param {*} samplerFlag     ：暂缺
+ * @param {*} repeat ：是否repeat
  */
 export async function createTextureFromUrl(context, url, samplerFlag = false, repeat = true) {
 
@@ -124,8 +124,6 @@ export async function createTextureFromUrl(context, url, samplerFlag = false, re
  * 加载纹理 NEAREST
  * @param {*} context :any,cesium 上下文
  * @param {*} url   ：image
- * @param {*} index     ：number ,第几帧数据
- * @param {*} first ：是否为第一次加载，默认：false（不是）
  */
 export async function createTextureNearestFromUrl(context, url) {
 
@@ -196,8 +194,10 @@ export function createFramebuffer(context, colorTexture, depthTexture) {
 }
 
 /**
- * 创建FBO，空的FBO
- * @param {*} context 
+ * 创建默认的FBO
+ * @param {*} context cesium 的gl内容对象
+ * @param {*} w width
+ * @param {*} h height
  * @returns 
  */
 export function createFramebufferDefault(context, w = false, h = false) {

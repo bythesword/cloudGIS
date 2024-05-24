@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        async function test() {
+            let response = await fetch('/data.bin');
+            if (response.ok) { // 如果 HTTP 状态码为 200-299
+                // 获取 response body（此方法会在下面解释）
+                let buffer = await response.arrayBuffer();
+                var floatArray = new Float32Array(buffer);
+                // 使用floatArray
+                console.log(floatArray[0]); // 输出: 1.1
+                console.log(floatArray[1]); // 输出: 2.2
+            } else {
+                alert("HTTP-Error: " + response.status);
+            }
+        }
+        test();
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+
+        function saveArrayBuffer(arrayBuffer, fileName) {
+            // 将ArrayBuffer转换为Blob对象
+            const blob = new Blob([arrayBuffer]);
+
+            // 创建一个指向Blob内容的URL
+            const blobUrl = URL.createObjectURL(blob);
+
+            // 创建一个a元素，模拟点击进行下载
+            const downloadLink = document.createElement('a');
+            downloadLink.href = blobUrl;
+            downloadLink.download = fileName;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+
+            // 清理
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(blobUrl);
+        }
+
+        // 使用示例
+        const arrayBuffer = new ArrayBuffer(8); // 假设这是你需要保存的ArrayBuffer
+        var view = new Float32Array(arrayBuffer);
+        view[0] = 1.1; // 设置第一个浮点数
+        view[1] = 2.2; // 设置第二个浮点数
+        saveArrayBuffer(arrayBuffer, 'data.bin'); // 保存文件为'data.bin'
+    </script>
+</body>
+</html>

@@ -6,9 +6,11 @@ import "/public/cesium/Widgets/widgets.css";
 import { CustomPrimitive } from '../jsm/customPrimitive';
 import *  as Util from "../jsm/baseUtil"
 
-import redFS from "../shaders/base/red.fs.glsl?raw"
-import baseVS from "../shaders/base/base.VS.glsl?raw"
-import quadVS from "../shaders/base/quad.VS.glsl?raw"
+import cubeClippingFS from "../shaders/base/cubeClipping.fs.glsl?raw"
+
+import cubeVS from "../shaders/base/cube.VS.glsl?raw"
+
+import { cube } from '../jsm/cube';
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlZjNiZTgxOS0xZDYwLTQzNzctYWRkOS00ZjJkZDI2YjA5MGMiLCJpZCI6ODMyOTksImlhdCI6MTY0NTY3MTU4NH0.2bu4bjqgk1yx5JMdC1iU8j65IlMztD4KI11scmH_sHQ';
 
@@ -35,57 +37,61 @@ viewer.camera.setView({
 window.Cesium = Cesium;//add by tom
 window.viewer = viewer;
 
-var origin = Cesium.Cartesian3.fromDegrees(116.3915382409668, 39.8085, 1)
+var origin = Cesium.Cartesian3.fromDegrees(116.396, 39.811, 200)
 var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin)
-
+let cubeBox = new cube();
+window.cube = cubeBox;
 let option = {
     commandType: 'Draw',
     attributes: {
         "position": {
             index: 0,
             componentsPerAttribute: 3,
-            vertexBuffer: [
-                -100, -100, 0, // 1
-                100, -100, 0, // 2
-                100, 100, 0, // 4
+            vertexBuffer:
+                cubeBox.triangles,
+            // [
+            //     -100, -100, 100, // 1
+            //     100, -100, 100, // 2
+            //     100, 100, 100, // 4
 
-                -100, -100, 0, // 1
-                100, 100, 0,//4
-                -100, 100, 0, //3 
-            ],//normal array
+            //     -100, -100, 100, // 1
+            //     100, 100, 100,//4
+            //     -100, 100, 100, //3 
+            // ]            ,//normal array
             componentDatatype: Cesium.ComponentDatatype.FLOAT
         },
-        "uv": {
-            index: 1,
-            componentsPerAttribute: 2,
-            vertexBuffer: [
-                0, 0,
-                1, 0,
-                1, 1,
+        // "uv": {
+        //     index: 1,
+        //     componentsPerAttribute: 2,
+        //     vertexBuffer: [
+        //         0, 0,
+        //         1, 0,
+        //         1, 1,
 
-                0, 1,
-                1, 1,
-                0, 1,
-            ],//normal array
-            componentDatatype: Cesium.ComponentDatatype.FLOAT
-        }
+        //         0, 1,
+        //         1, 1,
+        //         0, 1,
+        //     ],//normal array
+        //     componentDatatype: Cesium.ComponentDatatype.FLOAT
+        // }
     },
     modelMatrix: modelMatrix,
     primitiveType: Cesium.PrimitiveType.TRIANGLES,
     uniformMap: {
-        u_plane:()=>{return {x:1,y:0,z:0,w:50}},
+        u_plane: () => { return { x: 1, y: 0, z: 0, w: -60 } },
     },
-    vertexShaderSource: quadVS,
-    fragmentShaderSource: redFS,
-    // rawRenderState:
-    //     Util.createRawRenderState({
-    //         // undefined value means let Cesium deal with it
-    //         viewport: undefined,
-    //         depthTest: {
-    //             enabled: true
-    //         },
-    //         depthMask: true
-    //     }),
+    pass: Cesium.Pass.TRANSLUCENT,
+    vertexShaderSource: cubeVS,
+    fragmentShaderSource: cubeClippingFS,
+    rawRenderState:
+        Util.createRawRenderState({
+            // undefined value means let Cesium deal with it
+            // viewport: undefined,
+            depthTest: {
+                enabled: true
+            },
+            // depthMask: true
+        }),
     // framebuffer: this.framebuffers.segments,
     autoClear: false
 }
@@ -94,3 +100,4 @@ window.main = oneCommand;
 
 viewer.scene.globe.depthTestAgainstTerrain = true;
 viewer.scene.primitives.add(oneCommand);
+

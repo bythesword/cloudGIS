@@ -24,12 +24,12 @@ export declare type CCoptionsAttributes = {
      */
     [n in string]: CCoptionsAttributePerOne
 }
-        /**
-         * 0=不需要
-         * 1=未初始化
-         * 2=初始化中
-         * 3=完成初始化
-         */
+/**
+ * 0=不需要
+ * 1=未初始化
+ * 2=初始化中
+ * 3=完成初始化
+ */
 export enum initStatue {
     donotNeed = 0,
     noStrat = 1,
@@ -238,6 +238,32 @@ export declare type CCoptions = {
             }
      */
     preInit?: any,
+    /**
+     * uniformMap的纹理对应名称，
+     * 名称=GLSLuniform 中的名称
+     * 对应的数字是preInit中的scope.DS_textures[0]数组中的下表
+     * textures: {
+        iChannel0: "0",
+        iChannel1: "1",
+    },
+     */
+    textures?: any,
+
+    /**
+     * 
+     * pass ：渲染通道，Cesium 提供的常用渲染通道（封装在Cesium.Pass）有
+                ENVIRONMENT：环境，如天空盒（星空背景）
+                COMPUTE ：用于并行加速计算
+                GLOBE ：地形瓦片等
+                TERRAIN_CLASSIFICATION ：地形分类
+                CESIUM_3D_TILE ：3D Tiles 瓦片
+                CESIUM_3D_TILE_CLASSIFICATION ：3D Tiles 分类（单体化）
+                OPAQUE ：不透明物体
+                TRANSLUCENT ：半透明物体
+
+        默认： Cesium.Pass.OPAQUE               
+     */
+    pass:any,
 
 }
 
@@ -256,6 +282,8 @@ export declare class CustomPrimitive {
      */
     enable: boolean
 
+    /**Cesium 提供的常用渲染通道,默认： Cesium.Pass.OPAQUE  */
+    pass:any
 
     /**cesium frameState */
     frameState: any
@@ -281,8 +309,13 @@ export declare class CustomPrimitive {
      * 是否执行shader状态
      * @param enable 
      */
-    show(): boolean
-
+    getShow(): boolean
+    /**
+     * 
+     * 设置执行shader状态
+     * @param enable 
+     */
+    show(enable: boolean): void
     /**
      * 返回shader状态
      */
@@ -351,28 +384,26 @@ export declare function getFullscreenQuad(): any
  * @param {*} typedArray : 例子 const particleState = new Uint8Array(particleRes * particleRes * 4);//1024*4,RGBA
  * @returns 
  */
-export declare function createTexture(options: any, typedArray: any): any
+export declare async function createTexture(options: any, typedArray: any): any
 
 /**
  * 加载纹理 NEAREST
  * @param {*} context :any,cesium 上下文
  * @param {*} url   ：image
- * @param {*} index     ：number ,第几帧数据
- * @param {*} first ：是否为第一次加载，默认：false（不是）
  */
-export async function createTextureNearestFromUrl(context, url): any
+export async function createTextureNearestFromUrl(context: any, url: string): any
 
 /**
  * 加载纹理 非NEAREST
  * @param {*} context :any,cesium 上下文
  * @param {*} url   ：image
- * @param {*} index     ：number ,第几帧数据
- * @param {*} first ：是否为第一次加载，默认：false（不是）
+ * @param {*} samplerFlag     ：暂缺
+ * @param {*} repeat ：是否repeat
  */
 export async function createTextureFromUrl(context, url, samplerFlag = false, repeat = true): any
 
 /**
- * 创建FBO，空的FBO
+ * 创建FBO，空的FBO。并自定义color和depth纹理并作为输入
  * @param {*} context 
  * @param {Util.createTexture()} colorTexture 
  * @param {Util.createTexture()} depthTexture 
@@ -382,18 +413,20 @@ export declare function createFramebuffer(context: any, colorTexture: any, depth
 
 
 /**
- * 创建FBO，空的FBO
- * @param {*} context 
+ * 创建默认的FBO
+ * @param {*} context cesium 的gl内容对象
+ * @param {*} w width
+ * @param {*} h height
  * @returns 
  */
-export function createFramebufferDefault(context, w = false, h = false): any
+export function createFramebufferDefault(context: any, w = false, h = false): any
 
 /**
  * 创建渲染纹理2个color 和 depth，为创建FBO使用
  * @param {*} context 
  * @returns {Color: {},Depth: {},}
  */
-export function createRenderingTextures(context, w = false, h = false): any
+export function createRenderingTextures(context: any, w = false, h = false): any
 
 
 /**

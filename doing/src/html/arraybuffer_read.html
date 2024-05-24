@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        fetch('/data.bin')
+            .then(response => response.arrayBuffer())
+            .then(buffer => {
+                var floatArray = new Float32Array(buffer);
+                // 使用floatArray
+                console.log(floatArray[0]); // 输出: 1.1
+                console.log(floatArray[1]); // 输出: 2.2
+            });
+
+    </script>
+</body>
+
+</html>

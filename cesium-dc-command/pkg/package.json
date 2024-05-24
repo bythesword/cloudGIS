@@ -1,6 +1,6 @@
 {
   "name": "cesium-dc-command",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "cesium 的 command 二次封装",
   "type": "module",
   "main": "index.js",

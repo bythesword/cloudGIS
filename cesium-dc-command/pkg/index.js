@@ -1,4 +1,4 @@
-import { Matrix4, defaultValue, ClearCommand, Color, Pass, ComputeCommand, Buffer, BufferUsage, VertexArray, ShaderProgram, RenderState, DrawCommand, defined, destroyObject } from 'cesium';
+import { Matrix4, defaultValue, defined, ClearCommand, Color, Pass, ComputeCommand, Buffer, BufferUsage, VertexArray, ShaderProgram, RenderState, DrawCommand, destroyObject } from 'cesium';
 
 /**
  * 异步加载文件
@@ -88,8 +88,8 @@ function createTexture(options, typedArray) {
  * 加载纹理 非NEAREST
  * @param {*} context :any,cesium 上下文
  * @param {*} url   ：image
- * @param {*} index     ：number ,第几帧数据
- * @param {*} first ：是否为第一次加载，默认：false（不是）
+ * @param {*} samplerFlag     ：暂缺
+ * @param {*} repeat ：是否repeat
  */
 async function createTextureFromUrl(context, url, samplerFlag = false, repeat = true) {
 
@@ -125,8 +125,6 @@ async function createTextureFromUrl(context, url, samplerFlag = false, repeat = 
  * 加载纹理 NEAREST
  * @param {*} context :any,cesium 上下文
  * @param {*} url   ：image
- * @param {*} index     ：number ,第几帧数据
- * @param {*} first ：是否为第一次加载，默认：false（不是）
  */
 async function createTextureNearestFromUrl(context, url) {
 
@@ -197,8 +195,10 @@ function createFramebuffer(context, colorTexture, depthTexture) {
 }
 
 /**
- * 创建FBO，空的FBO
- * @param {*} context 
+ * 创建默认的FBO
+ * @param {*} context cesium 的gl内容对象
+ * @param {*} w width
+ * @param {*} h height
  * @returns 
  */
 function createFramebufferDefault(context, w = false, h = false) {
@@ -402,6 +402,10 @@ class CustomPrimitive {
 
         this.DS_textures = {};//纹理集合
         this.DS = {};//数据集合存放地
+        this.pass = false;
+        if (!defined(options.pass)) {
+            this.pass = options.pass;
+        }
         ///////////////////////////////////////////////////////////////////
         // about init
 
@@ -565,7 +569,7 @@ class CustomPrimitive {
                     shaderProgram: shaderProgram,
                     framebuffer: this.framebuffer,
                     renderState: renderState,
-                    pass: Pass.OPAQUE
+                    pass: this.pass || Pass.OPAQUE
                 });
             }
             case 'Compute': {
@@ -594,7 +598,7 @@ class CustomPrimitive {
 
     update(frameState) {
         this.frameState = frameState;
-        if (!this.show()) {
+        if (!this.getShow()) {
             return;
         }
 
@@ -636,8 +640,11 @@ class CustomPrimitive {
     setEnable(enable = true) {
         this.enable = enable;
     }
-    show() {
+    getShow() {
         return this.enable;
+    }
+    show(enable = true) {
+        this.enable = enable;
     }
     getReady() {
         if (typeof this.ready == "undefined" || this.ready == undefined || this.ready == 0) {
@@ -649,7 +656,7 @@ class CustomPrimitive {
     }
     getStatus() {
         return {
-            show: this.show(),
+            show: this.getShow(),
             initStatue: this.initStatue,
             ready: this.getReady(),
         }
