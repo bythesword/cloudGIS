@@ -40,7 +40,21 @@ function init() {
         format: "image/jpeg",
         tileMatrixSetID: "GoogleMapsCompatible",
         show: true
-    }));
+    },    contextOptions: {
+        // cesium状态下允许canvas转图片convertToImage
+        webgl: {
+            alpha: true,
+            depth: false,
+            stencil: true,
+            antialias: true,
+            premultipliedAlpha: true,
+            preserveDrawingBuffer: true,//通过canvas.toDataURL()实现截图需要将该项设置为true
+            failIfMajorPerformanceCaveat: false,
+        },
+        allowTextureFilterAnisotropic: true,
+        requestWebgl1: true, //设置使用Webgl1
+    }
+    ));
 
 // // 叠加国界服务
     var iboMap = new window.Cesium.UrlTemplateImageryProvider({

@@ -7,9 +7,13 @@ export class CustomPrimitive {
      * @param any options 
      */
     constructor(options) {
+        this.reConstructor(options)
+    }
+    reConstructor(options) {
         this.name = options.name;
         this.input = options;
         this.ready = options.ready || undefined;
+        this.reNew = options.reNew || undefined;
         if (typeof options.modelMatrix !== "undefined")
             this.modelMatrix = options.modelMatrix;
         else
@@ -190,7 +194,7 @@ export class CustomPrimitive {
                 this.uniformMap['iTime'] = () => {
                     // this.iTime += 0.0051; return this.iTime
                     let iTime = (new Date().getTime() - this.timestamp) / 1000.0;
-                     console.log(iTime);
+                    console.log(iTime);
                     return iTime;
 
                 };
@@ -223,7 +227,7 @@ export class CustomPrimitive {
                     framebuffer: this.framebuffer,
                     renderState: renderState,
                     pass: this.pass || Cesium.Pass.OPAQUE,
-               
+
                 });
             }
             case 'Compute': {
@@ -255,7 +259,9 @@ export class CustomPrimitive {
         if (!this.getShow()) {
             return;
         }
-
+        if (this.getReNew()) {
+            this.commandToExecute = null;
+        }
         if (this.getReady()) {
             if (this.initStatue == 3 || this.initStatue == 0) {
                 if (!Cesium.defined(this.commandToExecute)) {
@@ -263,7 +269,7 @@ export class CustomPrimitive {
                 }
 
                 if (Cesium.defined(this.preExecute)) {
-                    this.preExecute();
+                    this.preExecute(this);
                 }
 
                 if (Cesium.defined(this.clearCommand)) {
@@ -300,12 +306,21 @@ export class CustomPrimitive {
     show(enable = true) {
         this.enable = enable;
     }
+    getReNew() {
+        if (typeof this.reNew == "undefined" || this.reNew == undefined) {
+        
+            return false;
+        }
+        else {
+            return this.input.reNew(this);
+        }
+    }
     getReady() {
         if (typeof this.ready == "undefined" || this.ready == undefined || this.ready == 0) {
             return true;
         }
         else {
-            return this.input.ready();
+            return this.input.ready(this);
         }
     }
     getStatus() {

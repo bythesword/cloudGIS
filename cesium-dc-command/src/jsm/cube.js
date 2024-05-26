@@ -1,7 +1,7 @@
 
-import { vec2, vec3, vec4 } from "wgpu-matrix";
-// import { Vec2, Vec3, Vec4 } from "wgpu-matrix";
-// import { Mat3, Mat4 } from "wgpu-matrix";
+import { vec2, vec3, vec4, mat4, mat3 } from "wgpu-matrix";
+import triangulate from "delaunay-triangulate";
+
 class cube {
 
     constructor(size = 200) {
@@ -29,9 +29,15 @@ class cube {
         ]
 
         let plane = [1, 0, 0, 50];
-        console.log(this.generateTriangles(A, B, C, D, E, F, G, H));
-        console.log(this.generateFramelines(A, B, C, D, E, F, G, H))
-        console.log(this.generateNetworks(A, B, C, D, E, F, G, H));
+        // console.log(
+        this.generateTriangles(A, B, C, D, E, F, G, H)
+        // );
+        // console.log        (
+        this.generateFramelines(A, B, C, D, E, F, G, H)
+        // )
+        // console.log(
+        this.generateNetworks(A, B, C, D, E, F, G, H)
+        // );
         this.getIntersect(plane);
     }
 
@@ -82,15 +88,23 @@ class cube {
 
     getIntersect(plane) {
         let points = [];
+        let pointsObj = {};
 
         /**
          * 1
          */
+        let planeNormalize = vec3.normalize(vec3.create(plane[0], plane[1], plane[2]));
         for (let i of this.networks) {
-            let onePoint = this.getOnelineIntersectOfPlane(plane, i);
+            let onePoint = this.getOnelineIntersectOfPlane([planeNormalize[0], planeNormalize[1], planeNormalize[2], plane[3]], i);
             if (onePoint) {
-                points.push([onePoint[0], onePoint[1], onePoint[2]]);
+                // points.push([onePoint[0], onePoint[1], onePoint[2]]);
+                let name = onePoint.join("_");
+                pointsObj[name] = [onePoint[0], onePoint[1], onePoint[2]];
             }
+        }
+        for (let i in pointsObj) {
+            let perOne = pointsObj[i];
+            points.push(perOne);
         }
         this.pointsOfIntersectOfPlane = points;
         return points;
@@ -133,6 +147,72 @@ class cube {
 
     }
 
+
+    getViewMatrix(plane) {
+        const normalPlane = vec3.create(plane[0], plane[1], plane[2]);
+        let vectorZ = vec3.normalize(normalPlane);
+        // console.log("vector Z normalize", vectorZ);
+        let vectorX = vec3.create(1, 0, 0);
+        if (vectorZ[0] == 0 && vectorZ[1] == 0 && vectorZ[2] == 1) { }
+        else
+            vectorX = vec3.cross(vec3.create(0, 0, 1), vectorZ);
+        // console.log("vector X normalize", vectorX);
+        let vectorY = vec3.cross(vectorZ, vectorX);
+        // console.log("vector Y normalize", vectorY);
+        // let m4 = mat4.create();
+        let m4 = mat4.set(
+            vectorX[0], vectorX[1], vectorX[2], 0,
+            vectorY[0], vectorY[1], vectorY[2], 0,
+            vectorZ[0], vectorZ[1], vectorZ[2], 0,
+            0, 0, 0, 1
+        );
+        return m4;
+    }
+    getPointsOf2D(plane, points) {
+        let m4 = this.getViewMatrix(plane);
+        let points2D = [];
+        for (let perPoint of points) {
+            let one = vec3.transformMat4(vec3.create(perPoint[0], perPoint[1], perPoint[2]), m4);
+            let onePoint2D = [one[0], one[1]];
+            points2D.push(onePoint2D);
+        }
+        // console.log(points2D)
+        return points2D;
+
+    }
+    getDelaunay2D(plane) {
+        let trianglesPosition = [];
+        let frameLinePosition = [];
+        let frameLinePositionObj = {};
+        if (plane.length == 4) {
+            let points = this.getIntersect(plane);
+            // console.log(points);
+            let pointsOf2D = this.getPointsOf2D(plane, points);
+            // console.log(pointsOf2D)
+            let cell = triangulate(pointsOf2D);
+            // console.log(cell)
+            for (let i of cell) {
+                trianglesPosition.push(points[i[0]][0], points[i[0]][1], points[i[0]][2]);
+                trianglesPosition.push(points[i[1]][0], points[i[1]][1], points[i[1]][2]);
+                trianglesPosition.push(points[i[2]][0], points[i[2]][1], points[i[2]][2]);
+                frameLinePositionObj[[i[0], i[1]].sort().join("_")] = [i[0], i[1]];
+                frameLinePositionObj[[i[1], i[2]].sort().join("_")] = [i[1], i[2]];
+                frameLinePositionObj[[i[2], i[1]].sort().join("_")] = [i[2], i[0]];
+            }
+            for (let i in frameLinePositionObj) {
+                let perOne = frameLinePositionObj[i];
+                frameLinePosition.push(points[perOne[0]][0], points[perOne[0]][1], points[perOne[0]][2]);
+                frameLinePosition.push(points[perOne[1]][0], points[perOne[1]][1], points[perOne[1]][2]);
+            }
+
+            this.clippingTriangles = trianglesPosition;
+            this.clippingFramelines = frameLinePosition;
+
+        }
+        else {
+            console.log("错误:plane 的格式=[x,y,z,w]");
+        }
+    }
 
 }
 

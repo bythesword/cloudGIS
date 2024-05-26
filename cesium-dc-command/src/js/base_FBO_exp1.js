@@ -18,6 +18,20 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
     imageryProvider: new Cesium.UrlTemplateImageryProvider({
         url: "http://webrd02.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}",//行政普通
     }),
+    contextOptions: {
+        // cesium状态下允许canvas转图片convertToImage
+        webgl: {
+            alpha: true,
+            depth: false,
+            stencil: true,
+            antialias: true,
+            premultipliedAlpha: true,
+            preserveDrawingBuffer: true,//通过canvas.toDataURL()实现截图需要将该项设置为true
+            failIfMajorPerformanceCaveat: false,
+        },
+        allowTextureFilterAnisotropic: true,
+        requestWebgl1: true, //设置使用Webgl1
+    }
 });
 // viewer.camera.flyTo({
 //     destination: Cesium.Cartesian3.fromDegrees(116.3915382409668, 39.8085, 2500),
