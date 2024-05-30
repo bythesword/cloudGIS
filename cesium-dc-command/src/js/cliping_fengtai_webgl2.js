@@ -11,11 +11,13 @@ import cubeVS from "../webgl2/base/cube.VS.glsl?raw"
 import whiteFS from "../webgl2/base/white.fs.glsl?raw"
 import baseVS from "../webgl2/base/base.VS.glsl?raw"
 import poscolorFS from "../webgl2/base/poscolor.fs.glsl?raw"
-
+import redFS from "../webgl2/base/red.fs.glsl?raw"
+import greenFS from "../webgl2/base/green.fs.glsl?raw"
+import blueFS from "../webgl2/base/blue.fs.glsl?raw"
 
 import { cube } from '../jsm/cube';
 
-import * as oneTriangle from "../../public/onetriangle.json";
+import * as oneTriangle from "../../public/fengtai.json";
 import { getTTT } from '../jsm/index';
 
 //////////////////////////
@@ -34,7 +36,8 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
 //         pitch: Cesium.Math.toRadians(-65.0),
 //     }
 // });
-let lang = 116.396, lat = 39.811;
+let lang = 116.4341, lat = 39.750011;
+// let lang = 116.255152, lat = 39.826826499999996;
 viewer.camera.setView({
     destination: Cesium.Cartesian3.fromDegrees(lang, lat - 0.0150, 10000),
     orientation: {
@@ -47,14 +50,93 @@ window.Cesium = Cesium;//add by tom
 window.viewer = viewer;
 ////////////////////////////////
 //matrix 
-var origin = Cesium.Cartesian3.fromDegrees(lang, lat, 0)
+var origin = Cesium.Cartesian3.fromDegrees(lang, lat, 1000)
 var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin)
 
 
 //////////////////////////
 //plane 
 
+let planeOne = new Cesium.ClippingPlane(
+    new Cesium.Cartesian3(1.0, 0.0, 0.0),
+    0.0);
+//保存的old plane 参数
+let planeOneOld = Cesium.ClippingPlane.clone(planeOne);
+//console.log(planeOneOld)
+let selectedPlane;
+// Select plane when mouse down
+const downHandler = new Cesium.ScreenSpaceEventHandler(
+    viewer.scene.canvas
+);
+let click = false;
 
+
+downHandler.setInputAction(function (movement) {
+    const pickedObject = scene.pick(movement.position);
+    if (
+        Cesium.defined(pickedObject) &&
+        Cesium.defined(pickedObject.id) &&
+        Cesium.defined(pickedObject.id.plane)
+    ) {
+        selectedPlane = pickedObject.id.plane;
+        selectedPlane.material = Cesium.Color.WHITE.withAlpha(0.5);
+        selectedPlane.outlineColor = Cesium.Color.WHITE;
+        scene.screenSpaceCameraController.enableInputs = false;
+        click = true;
+    }
+}, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+// Release plane on mouse up
+const upHandler = new Cesium.ScreenSpaceEventHandler(
+    viewer.scene.canvas
+);
+upHandler.setInputAction(function () {
+    if (Cesium.defined(selectedPlane)) {
+        selectedPlane.material = Cesium.Color.WHITE.withAlpha(0.1);
+        selectedPlane.outlineColor = Cesium.Color.WHITE;
+        selectedPlane = undefined;
+        click = false;
+    }
+
+    scene.screenSpaceCameraController.enableInputs = true;
+}, Cesium.ScreenSpaceEventType.LEFT_UP);
+
+let targetY = 0.0;
+// Update plane on mouse move
+const moveHandler = new Cesium.ScreenSpaceEventHandler(
+    viewer.scene.canvas
+);
+moveHandler.setInputAction(function (movement) {
+    if (Cesium.defined(selectedPlane) && click) {
+        const deltaY = movement.startPosition.x - movement.endPosition.x;
+        // //console.log(deltaY, targetY)
+        targetY += deltaY * 10;
+        planeOne.distance = targetY;
+        // //console.log(planeOne.distance)
+
+    }
+}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+function createPlaneUpdateFunction(plane) {
+    return function () {
+        plane.distance = targetY;
+        return plane;
+    };
+}
+// createPlaneUpdateFunction(selectedPlane)
+const planeEntity = viewer.entities.add({
+    position: Cesium.Cartesian3.fromDegrees(lang, lat, 200),
+    plane: {
+        dimensions: new Cesium.Cartesian2(40000, 10000),
+        material: Cesium.Color.WHITE.withAlpha(0.1),
+        plane: new Cesium.CallbackProperty(
+            createPlaneUpdateFunction(planeOne),
+            false
+        ),
+        outline: true,
+        outlineColor: Cesium.Color.WHITE,
+    },
+});
 
 //////////////////////////////////
 //main Draw command 
@@ -63,53 +145,65 @@ let level = ["one", "two", "three"];
 let list = ["top", "bottom", "side"];
 let listnetwork = ["topNetworks", "bottomNetworks", "sideNetworks"];
 // let oneTriangle = getTTT();
-for (let i of level) {
-    for (let j of listnetwork) {
-        let perOne = oneTriangle[i][j];
-        let option = {
-            commandType: 'Draw',
-            attributes: {
-                "position": {
-                    index: 0,
-                    componentsPerAttribute: 3,
-                    vertexBuffer: perOne.position,
-                    // vertexBuffer: perOne.position,
-                    componentDatatype: Cesium.ComponentDatatype.FLOAT
-                },
+// for (let i of level) {
+//     for (let j of listnetwork) {
+//         let perOne = oneTriangle[i][j];
+//         let option = {
+//             commandType: 'Draw',
+//             attributes: {
+//                 "position": {
+//                     index: 0,
+//                     componentsPerAttribute: 3,
+//                     vertexBuffer: perOne.position,
+//                     // vertexBuffer: perOne.position,
+//                     componentDatatype: Cesium.ComponentDatatype.FLOAT
+//                 },
 
-            },
-            modelMatrix: modelMatrix,
-            primitiveType: Cesium.PrimitiveType.LINES,
-            // primitiveType: Cesium.PrimitiveType.TRIANGLES,
-            uniformMap: {
-                // u_plane: () => { return { x: 0 - planeOne.normal.x, y: 0 - planeOne.normal.y, z: 0 - planeOne.normal.z, w: planeOne.distance } },
-            },
-            pass: Cesium.Pass.TRANSLUCENT,
-            vertexShaderSource: baseVS,
-            fragmentShaderSource: whiteFS,
-            rawRenderState:
-                Util.createRawRenderState({
-                    // undefined value means let Cesium deal with it
-                    // viewport: undefined,
-                    depthTest: {
-                        enabled: true
-                    },
-                    depthMask: true,
-                    polygonOffset: {
-                        enabled: true,
-                        factor: 100.1,
-                        units: 200.5
-                    },
-                }),
-            // framebuffer: this.framebuffers.segments,
-            autoClear: false
-        }
-        let oneCommand1 = new CustomPrimitive(option)
-        viewer.scene.primitives.add(oneCommand1);
-        window.command.push(oneCommand1);
-    }
-}
+//             },
+//             modelMatrix: modelMatrix,
+//             primitiveType: Cesium.PrimitiveType.LINES,
+//             // primitiveType: Cesium.PrimitiveType.TRIANGLES,
+//             uniformMap: {
+//                 // u_plane: () => { return { x: 0 - planeOne.normal.x, y: 0 - planeOne.normal.y, z: 0 - planeOne.normal.z, w: planeOne.distance } },
+//             },
+//             pass: Cesium.Pass.TRANSLUCENT,
+//             vertexShaderSource: baseVS,
+//             fragmentShaderSource: whiteFS,
+//             rawRenderState:
+//                 Util.createRawRenderState({
+//                     // undefined value means let Cesium deal with it
+//                     // viewport: undefined,
+//                     depthTest: {
+//                         enabled: true
+//                     },
+//                     depthMask: true,
+//                     polygonOffset: {
+//                         enabled: true,
+//                         factor: 100.1,
+//                         units: 200.5
+//                     },
+//                 }),
+//             // framebuffer: this.framebuffers.segments,
+//             autoClear: false
+//         }
+//         let oneCommand1 = new CustomPrimitive(option)
+//         viewer.scene.primitives.add(oneCommand1);
+//         window.command.push(oneCommand1);
+//     }
+// }
+let colorFS = '';
+let color_i = 0;
 for (let i of level) {
+    if (color_i == 0) {
+        colorFS = greenFS;
+    }
+    else if (color_i == 1) {
+        colorFS = redFS;
+    }
+    else if (color_i == 2) {
+        colorFS = blueFS;
+    }
+    color_i++;
     for (let j of list) {
         let perOne = oneTriangle[i][j];
         let option = {
@@ -128,11 +222,12 @@ for (let i of level) {
             // primitiveType: Cesium.PrimitiveType.LINES,
             primitiveType: Cesium.PrimitiveType.TRIANGLES,
             uniformMap: {
-                // u_plane: () => { return { x: 0 - planeOne.normal.x, y: 0 - planeOne.normal.y, z: 0 - planeOne.normal.z, w: planeOne.distance } },
+                u_plane: () => { return { x: 0 - planeOne.normal.x, y: 0 - planeOne.normal.y, z: 0 - planeOne.normal.z, w: planeOne.distance } },
             },
             pass: Cesium.Pass.TRANSLUCENT,
-            vertexShaderSource: baseVS,
-            fragmentShaderSource: poscolorFS,
+            vertexShaderSource: cubeVS,
+            fragmentShaderSource: colorFS,
+            // fragmentShaderSource: poscolorFS,
             rawRenderState:
                 Util.createRawRenderState({
                     // undefined value means let Cesium deal with it

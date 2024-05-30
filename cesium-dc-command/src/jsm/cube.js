@@ -214,6 +214,14 @@ class cube {
         }
     }
 
+    generateNetworksBydata(data) {
+        let networks = [];
+        for (let i = 0; i < data.length; i += 6) {
+            networks.push([[data[i], data[i + 1], data[i + 2]], [data[i + 3], data[i + 4], data[i + 5]]]);
+        }
+        this.networks = networks;
+        return this.networks
+    }
 }
 
 
