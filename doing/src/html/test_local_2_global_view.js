@@ -118,30 +118,34 @@ viewer.entities.add(new Cesium.Entity({
 /////////////////////////////////////////////////////////////////////////////////////////////
 // print 
 /////////////////////////////////////////////////////////////////////////////////////////////
-let c1x = b.x - c.x;
-let c1y = b.y - c.y;
-let c1z = b.z - c.z
+// let c1x = b.x - c.x;
+// let c1y = b.y - c.y;
+// let c1z = b.z - c.z
+
+//这两个基本相同的
+let c1x = b.x - a.x;
+let c1y = b.y - a.y;
+let c1z = b.z - a.z
+
+// console.log("a=", a);
+// console.log("a_normail_z=", axis_z_normal);
+// console.log("up=", up);
+// console.log("axis_x=", axis_x);
+// console.log("axis_x_normal=", axis_x_normal);
+// console.log("axis_y=", axis_y);
+// console.log("axis_y_normal=", axis_y_normal);
 
 
-console.log("a=", a);
-console.log("a_normail_z=", axis_z_normal);
-console.log("up=", up);
-console.log("axis_x=", axis_x);
-console.log("axis_x_normal=", axis_x_normal);
-console.log("axis_y=", axis_y);
-console.log("axis_y_normal=", axis_y_normal);
-
-
-console.log("b=", b);
-console.log("a--b距离,cesium 计算:", Cesium.Cartesian3.distance(a, b));
-console.log("a--b距离:sqrt", Math.sqrt(c1x * c1x + c1y * c1y + c1z * c1z));
-console.log("a--b距离局部(5.8, 666, 2.13):sqrt", Math.sqrt(5.8 * 5.8 + 666 * 666 + 2.13 * 2.13));
-// console.log("c=", c);
-;
-console.log("\n");
+// console.log("b=", b);
+// console.log("a--b距离,cesium 计算:", Cesium.Cartesian3.distance(a, b));
+// console.log("a--b距离:sqrt", Math.sqrt(c1x * c1x + c1y * c1y + c1z * c1z));
+// console.log("a--b距离局部(5.8, 666, 2.13):sqrt", Math.sqrt(5.8 * 5.8 + 666 * 666 + 2.13 * 2.13));
+// // console.log("c=", c);
+// ;
+// console.log("\n");
 
 console.log("a点的地表局部坐标到全局的矩阵:", en_a_local_martix);
-console.log("\n");
+// console.log("\n");
 
 
 
@@ -150,7 +154,9 @@ console.log("c=", c, c1x, c1y, c1z)
 // view matrix 部分
 /////////////////////////////////////////////////////////////////////////////////////////////
 //使用自己计算的view matrix，这个与cesium ease north的矩阵是基本相同，只是没有xyz的module部分
-let np1 = new Cesium.Cartesian3(c1x, c1y, c1z);
+
+let np1 = new Cesium.Cartesian3(c1x, c1y, c1z);//B点在三维笛卡尔中的B-A的三维xyz的数值差
+
 let inverse_viewMatrix=Cesium.Matrix4.inverse (viewMatrix,  new Cesium.Matrix4())
 let np2 = Cesium.Matrix4.multiplyByPoint(inverse_viewMatrix, np1, new Cesium.Cartesian3());
 console.log("np2 自己计算          =", np2);

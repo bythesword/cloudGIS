@@ -12,10 +12,10 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
     }),
 });
 
-
+///////////////////////////////////////////////////////////////////////////////////////
+//A
 let x1 = 116.3915382409668;
 let y1 = 39.9085;
-
 
 viewer.camera.setView({
     destination: Cesium.Cartesian3.fromDegrees(x1, y1, 6000)
@@ -38,6 +38,9 @@ viewer.entities.add(new Cesium.Entity({
     },
 }));
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+//B
 // let b = new Cesium.Cartesian3(a.x + 1000, a.y + 0, a.z);
 let b = Cesium.Cartesian3.fromDegrees(x1, y1 + 0.006, 0);
 
@@ -52,14 +55,10 @@ viewer.entities.add(new Cesium.Entity({
 }));
 
 
-
+///////////////////////////////////////////////////////////////////////////////////////
+//C
 let result = new Cesium.Cartesian3();
-
-
-// Cesium.Cartesian3.projectVector (a, b, result) 
-
 let c = Cesium.Cartesian3.projectVector(b, a, result);
-
 
 viewer.entities.add(new Cesium.Entity({
     position: c,
@@ -70,23 +69,24 @@ viewer.entities.add(new Cesium.Entity({
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM
     },
 }));
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//计算B和C在三维笛卡尔中的距离
 let c1x = b.x - c.x;
 let c1y = b.y - c.y;
 let c1z = b.z - c.z
 
 
-console.log("a=", a);
-console.log("b=", b);
+// console.log("a=", a);
+// console.log("b=", b);
 console.log("a--b距离,cesium 计算:", Cesium.Cartesian3.distance(a, b));
 console.log("a--b距离:sqrt", Math.sqrt(c1x * c1x + c1y * c1y + c1z * c1z));
-console.log("a--b距离局部(5.8, 666, 2.13):sqrt", Math.sqrt(5.8*5.8+666*666+2.13*2.13));
+// console.log("a--b距离局部(5.8, 666, 2.13):sqrt", Math.sqrt(5.8*5.8+666*666+2.13*2.13));
 // console.log("c=", c);
 console.log("c=", c, c1x, c1y, c1z);
 console.log("\n");
 
-console.log("a点的地表局部坐标到全局的矩阵:", en_a_local_martix);
-console.log("\n");
+// console.log("a点的地表局部坐标到全局的矩阵:", en_a_local_martix);
+// console.log("\n");
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,13 +112,13 @@ console.log("\n");
 
 
 let c100 = Cesium.Matrix4.multiplyByPoint(en_a_local_martix, C1, new Cesium.Cartesian3());
-console.log('c100=', c100);
+console.log('第一次 c100= A的矩阵*C1点(5.8, 666, 2.13)', c100);
 
 //与矩阵成相同 start
 let C1_new_matrix = Cesium.Matrix4.multiplyTransformation(en_a_local_martix, C1_m_local, new Cesium.Matrix4());
 console.log('C1_new_matrix=', C1_new_matrix);
 c100 = Cesium.Matrix4.getTranslation(C1_new_matrix, new Cesium.Cartesian3());
-console.log('c100=', c100);
+console.log('第二次 c100=矩阵增加C1点(5.8, 666, 2.13)后的矩阵提取的位置', c100);
 //与矩阵成相同 end
 
 
@@ -137,7 +137,7 @@ console.log("\n"); console.log("\n"); console.log("\n"); console.log("\n");
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// console.log("\n");
+console.log("\n从经纬度到local");
 let en_a_local_martix_inverse = Cesium.Matrix4.inverse(en_a_local_martix, new Cesium.Matrix4());
 console.log('D1_newen_a_local_martix_inverse_matrix=', en_a_local_martix_inverse);
 let D1_new_local = Cesium.Matrix4.multiplyByPoint(en_a_local_martix_inverse, b, new Cesium.Cartesian3());

@@ -166,7 +166,7 @@ class cube {
             vectorZ[0], vectorZ[1], vectorZ[2], 0,
             0, 0, 0, 1
         );
-        return m4;
+        return mat4.inverse(m4);
     }
     getPointsOf2D(plane, points) {
         let m4 = this.getViewMatrix(plane);
