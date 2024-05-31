@@ -20,7 +20,7 @@ let lines = dataFromFile.split("\n");
 let data = [];
 for (let i of lines) {
     let perLine = i.split("\r")[0].split(",");
-    data.push([perLine[0], perLine[1], [perLine[2], perLine[3], perLine[4], perLine[5]]]);
+    data.push([parseFloat(perLine[0]), parseFloat(perLine[1]), [parseFloat(perLine[2]), parseFloat(perLine[3]), parseFloat(perLine[4]), parseFloat(perLine[5])]]);
 }
 
 var ws = fs.createWriteStream("lldddd.json", 'utf-8');

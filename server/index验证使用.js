@@ -12,6 +12,7 @@ let R = 18000;
 //center and local matrix
 
 let center = Cesium.Cartesian3.fromDegrees((langRight - langLeft) / 2 + langLeft, (latTop - latBottom) / 2 + latBottom, 0);
+console.log((langRight - langLeft) / 2 + langLeft, (latTop - latBottom) / 2 + latBottom)
 let A = Cesium.Cartesian3.fromDegrees(langLeft, latBottom, 0);
 let B = Cesium.Cartesian3.fromDegrees(langRight, latBottom, 0);
 let C = Cesium.Cartesian3.fromDegrees(langLeft, latTop, 0);

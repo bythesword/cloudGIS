@@ -288,13 +288,15 @@ export class CustomPrimitive {
     }
 
     isDestroyed() {
-        return false;
+        if (typeof this.flageDestroy != "undefined" && this.flageDestroy === true) return true;
+        else return false;
     }
 
     destroy() {
         if (Cesium.defined(this.commandToExecute)) {
             this.commandToExecute.shaderProgram = this.commandToExecute.shaderProgram && this.commandToExecute.shaderProgram.destroy();
         }
+        this.flageDestroy = true;
         return Cesium.destroyObject(this);
     }
     setEnable(enable = true) {
@@ -308,7 +310,7 @@ export class CustomPrimitive {
     }
     getReNew() {
         if (typeof this.reNew == "undefined" || this.reNew == undefined) {
-        
+
             return false;
         }
         else {
