@@ -1,4 +1,4 @@
-import { Matrix4, defaultValue, defined, ClearCommand, Color, Pass, ComputeCommand, Buffer, BufferUsage, VertexArray, ShaderProgram, RenderState, DrawCommand, destroyObject } from 'cesium';
+import { Matrix4, defaultValue, defined, ClearCommand, Color, Pass, ComputeCommand, Buffer, BufferUsage, VertexArray, ShaderProgram, RenderState, DrawCommand, BoundingSphere, Cartesian3, destroyObject } from 'cesium';
 
 /**
  * 异步加载文件
@@ -365,14 +365,19 @@ class CustomPrimitive {
      * @param any options 
      */
     constructor(options) {
+        this.reConstructor(options);
+    }
+    reConstructor(options) {
         this.name = options.name;
         this.input = options;
         this.ready = options.ready || undefined;
+        this.reNew = options.reNew || undefined;
         if (typeof options.modelMatrix !== "undefined")
             this.modelMatrix = options.modelMatrix;
         else
             this.modelMatrix = Matrix4.IDENTITY;
         this.commandType = options.commandType;
+        this.RofBoundingSphere=this.input.RofBoundingSphere|100;
 
 
         this.attributes = options.attributes;//add by tom attributes from  input ,postion ,uv ,normal ,cm ....
@@ -403,7 +408,7 @@ class CustomPrimitive {
         this.DS_textures = {};//纹理集合
         this.DS = {};//数据集合存放地
         this.pass = false;
-        if (!defined(options.pass)) {
+        if (defined(options.pass)) {
             this.pass = options.pass;
         }
         ///////////////////////////////////////////////////////////////////
@@ -548,7 +553,7 @@ class CustomPrimitive {
                 this.uniformMap['iTime'] = () => {
                     // this.iTime += 0.0051; return this.iTime
                     let iTime = (new Date().getTime() - this.timestamp) / 1000.0;
-                    // console.log(iTime);
+                    console.log(iTime);
                     return iTime;
 
                 };
@@ -560,7 +565,8 @@ class CustomPrimitive {
                     }
                 }
                 var renderState = RenderState.fromCache(this.rawRenderState);
-                return new DrawCommand({
+                return new DrawCommand({                    
+                    boundingVolume: new BoundingSphere(Cartesian3.fromDegrees(this.input.coordinate[0], this.input.coordinate[1], this.input.coordinate[2]), this.RofBoundingSphere),
                     owner: this,
                     vertexArray: vertexArray,
                     primitiveType: this.primitiveType,
@@ -569,7 +575,8 @@ class CustomPrimitive {
                     shaderProgram: shaderProgram,
                     framebuffer: this.framebuffer,
                     renderState: renderState,
-                    pass: this.pass || Pass.OPAQUE
+                    pass: this.pass || Pass.OPAQUE,
+
                 });
             }
             case 'Compute': {
@@ -601,7 +608,9 @@ class CustomPrimitive {
         if (!this.getShow()) {
             return;
         }
-
+        if (this.getReNew()) {
+            this.commandToExecute = null;
+        }
         if (this.getReady()) {
             if (this.initStatue == 3 || this.initStatue == 0) {
                 if (!defined(this.commandToExecute)) {
@@ -609,7 +618,7 @@ class CustomPrimitive {
                 }
 
                 if (defined(this.preExecute)) {
-                    this.preExecute();
+                    this.preExecute(this);
                 }
 
                 if (defined(this.clearCommand)) {
@@ -628,13 +637,15 @@ class CustomPrimitive {
     }
 
     isDestroyed() {
-        return false;
+        if (typeof this.flageDestroy != "undefined" && this.flageDestroy === true) return true;
+        else return false;
     }
 
     destroy() {
         if (defined(this.commandToExecute)) {
             this.commandToExecute.shaderProgram = this.commandToExecute.shaderProgram && this.commandToExecute.shaderProgram.destroy();
         }
+        this.flageDestroy = true;
         return destroyObject(this);
     }
     setEnable(enable = true) {
@@ -646,12 +657,21 @@ class CustomPrimitive {
     show(enable = true) {
         this.enable = enable;
     }
+    getReNew() {
+        if (typeof this.reNew == "undefined" || this.reNew == undefined) {
+
+            return false;
+        }
+        else {
+            return this.input.reNew(this);
+        }
+    }
     getReady() {
         if (typeof this.ready == "undefined" || this.ready == undefined || this.ready == 0) {
             return true;
         }
         else {
-            return this.input.ready();
+            return this.input.ready(this);
         }
     }
     getStatus() {

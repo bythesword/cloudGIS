@@ -19,6 +19,7 @@ export class CustomPrimitive {
         else
             this.modelMatrix = Cesium.Matrix4.IDENTITY;
         this.commandType = options.commandType;
+        this.RofBoundingSphere=this.input.RofBoundingSphere|100;
 
 
         this.attributes = options.attributes;//add by tom attributes from  input ,postion ,uv ,normal ,cm ....
@@ -49,7 +50,7 @@ export class CustomPrimitive {
         this.DS_textures = {};//纹理集合
         this.DS = {};//数据集合存放地
         this.pass = false;
-        if (!Cesium.defined(options.pass)) {
+        if (Cesium.defined(options.pass)) {
             this.pass = options.pass;
         }
         ///////////////////////////////////////////////////////////////////
@@ -217,7 +218,8 @@ export class CustomPrimitive {
                     }
                 }
                 var renderState = Cesium.RenderState.fromCache(this.rawRenderState);
-                return new Cesium.DrawCommand({
+                return new Cesium.DrawCommand({                    
+                    boundingVolume: new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(this.input.coordinate[0], this.input.coordinate[1], this.input.coordinate[2]), this.RofBoundingSphere),
                     owner: this,
                     vertexArray: vertexArray,
                     primitiveType: this.primitiveType,

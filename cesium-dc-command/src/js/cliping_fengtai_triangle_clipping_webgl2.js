@@ -310,4 +310,5 @@ let option2 = {
     }
 }
 let oneCommand2 = new CustomPrimitive(option2)
+viewer.scene.primitives.add(oneCommand2);
 window.command2 = oneCommand2;
